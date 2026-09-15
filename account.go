@@ -14,6 +14,20 @@ func CreateAccount(db *sql.DB, username string, email string, password string) e
 		return err
 	}
 
+	var exists bool
+
+	err = db.QueryRow(
+		"SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)",
+		email,
+	).Scan(&exists)
+
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("cet email est déjà utilisé")
+	}
+
 	hash, err := HashPassword(password)
 	if err != nil {
 		return err
