@@ -65,6 +65,12 @@ func startHTTPServer(db *sql.DB) {
 		name := r.FormValue("name")
 		email := r.FormValue("email")
 		password := r.FormValue("password")
+		passwordConfirm := r.FormValue("password_confirm")
+
+		if password != passwordConfirm {
+			http.Error(w, "Les mots de passe ne correspondent pas", http.StatusBadRequest)
+			return
+		}
 
 		err := CreateAccount(db, name, email, password)
 
