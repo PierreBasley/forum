@@ -47,25 +47,26 @@ func CreateAccount(db *sql.DB, username string, email string, password string) e
 	return nil
 }
 
-func Login(db *sql.DB, email string, password string) error {
+func Login(db *sql.DB, email string, password string) (string, error) {
 
+	var userID string
 	var hash string
 
 	err := db.QueryRow(`
-		SELECT password_hash
+		SELECT id, password_hash
 		FROM users
 		WHERE email = ?
-	`, email).Scan(&hash)
+	`, email).Scan(&userID, &hash)
 
 	if err != nil {
-		return fmt.Errorf("email ou mot de passe incorrect")
+		return "", fmt.Errorf("email ou mot de passe incorrect")
 	}
 
 	if !CheckPasswordHash(password, hash) {
-		return fmt.Errorf("email ou mot de passe incorrect")
+		return "", fmt.Errorf("email ou mot de passe incorrect")
 	}
 
 	fmt.Println("Connexion réussie")
 
-	return nil
+	return userID, nil
 }

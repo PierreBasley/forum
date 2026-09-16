@@ -31,6 +31,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	go startHTTPServer(db)
+
 	fmt.Println("          FORUM")
 
 	for {
@@ -121,7 +123,7 @@ func login(db *sql.DB) {
 		return
 	}
 
-	err := Login(db, email, password)
+	_, err := Login(db, email, password)
 
 	if err != nil {
 		fmt.Println("Erreur :", err)
