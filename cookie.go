@@ -21,7 +21,7 @@ func CreateSessionCookie(w http.ResponseWriter) (string, error) {
 		Value:    sessionID.String(),
 		Expires:  expiresAt,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		SameSite: http.SameSiteStrictMode,
 		Path:     "/",
 	}
