@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Authentification</title>
+</head>
+
+<body>
+
+    <h1>Test Authentification</h1>
+
+    <hr>
+
+    <h2>Connexion</h2>
+
+    <form action="/login" method="POST">
+
+        <p>
+            <label for="login-email">Email :</label><br>
+            <input
+                type="email"
+                id="login-email"
+                name="email"
+                required
+            >
+        </p>
+
+        <p>
+            <label for="login-password">Mot de passe :</label><br>
+            <input
+                type="password"
+                id="login-password"
+                name="password"
+                required
+            >
+        </p>
+
+        <button type="submit">Se connecter</button>
+
+    </form>
+
+    <hr>
+
+    <h2>Créer un compte</h2>
+
+    <form action="/register" method="POST">
+
+        <p>
+            <label for="register-name">Nom :</label><br>
+            <input
+                type="text"
+                id="register-name"
+                name="name"
+                required
+            >
+        </p>
+
+        <p>
+            <label for="register-email">Email :</label><br>
+            <input
+                type="email"
+                id="register-email"
+                name="email"
+                required
+            >
+        </p>
+
+        <p>
+            <label for="register-password">Mot de passe :</label><br>
+            <input
+                type="password"
+                id="register-password"
+                name="password"
+                required
+            >
+        </p>
+
+        <p>
+            <label for="register-password-confirm">
+                Confirmer le mot de passe :
+            </label><br>
+            <input
+                type="password"
+                id="register-password-confirm"
+                name="password_confirm"
+                required
+            >
+        </p>
+
+        <button type="submit">Créer un compte</button>
+
+    </form>
+
+    <hr>
+
+    <h2>Session</h2>
+
+    <p>
+        <a href="/profil">Voir mon profil</a>
+    </p>
+
+    <p>
+        <a href="/logout">Se déconnecter</a>
+    </p>
+
+</body>
+</html>
