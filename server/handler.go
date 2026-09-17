@@ -1,33 +1,22 @@
-package main
+package server
 
 import (
 	"database/sql"
 	"fmt"
+	"forum/login"
 	"net/http"
 	"time"
 )
 
-func startHTTPServer(db *sql.DB) {
-
-	_, err := db.Exec(`
-	CREATE TABLE IF NOT EXISTS sessions (
-		id TEXT PRIMARY KEY,
-		user_id TEXT NOT NULL,
-		expires_at DATETIME NOT NULL
-	)
-`)
-
-	if err != nil {
-		fmt.Println("Erreur création sessions :", err)
-		return
-	}
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+func Index(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Need to add template parsing and execution
 		http.ServeFile(w, r, "templates/index.html")
-	})
+	}
+}
 
-	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-
+func LoginHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 			return
@@ -36,7 +25,7 @@ func startHTTPServer(db *sql.DB) {
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 
-		userID, err := Login(db, email, password)
+		userID, err := login.Login(db, email, password)
 
 		if err != nil {
 			http.Error(w, "Email ou mot de passe incorrect", http.StatusUnauthorized)
@@ -53,10 +42,11 @@ func startHTTPServer(db *sql.DB) {
 		})
 
 		http.Redirect(w, r, "/cookies", http.StatusSeeOther)
-	})
+	}
+}
 
-	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
-
+func Register(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 			return
@@ -72,7 +62,7 @@ func startHTTPServer(db *sql.DB) {
 			return
 		}
 
-		err := CreateAccount(db, name, email, password)
+		err := login.CreateAccount(db, name, email, password)
 
 		if err != nil {
 			http.Error(w, "Erreur création du compte", http.StatusBadRequest)
@@ -101,20 +91,36 @@ func startHTTPServer(db *sql.DB) {
 		})
 
 		http.Redirect(w, r, "/cookies", http.StatusSeeOther)
-	})
+	}
+}
 
-	http.HandleFunc("/cookies", func(w http.ResponseWriter, r *http.Request) {
+func Profile(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		sessionID, err := login.GetSessionCookie(r)
 
-		if r.Method != http.MethodGet {
-			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		if err != nil {
+			http.Error(w, "Vous n'êtes pas connecté", http.StatusUnauthorized)
 			return
 		}
 
-		http.ServeFile(w, r, "templates/cookies.html")
-	})
+		var userID string
 
-	http.HandleFunc("/accept-cookies", func(w http.ResponseWriter, r *http.Request) {
+		err = db.QueryRow(`
+	SELECT user_id
+	FROM sessions
+	WHERE id = ?
+	AND expires_at > datetime('now')
+`, sessionID).Scan(&userID)
 
+		if err != nil {
+			http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
+			return
+		}
+	}
+}
+
+func AcceptCookies(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 			return
@@ -129,7 +135,7 @@ func startHTTPServer(db *sql.DB) {
 
 		userID := cookie.Value
 
-		sessionID, err := CreateSessionCookie(w)
+		sessionID, err := login.CreateSessionCookie(w)
 
 		if err != nil {
 			http.Error(w, "Erreur création session", http.StatusInternalServerError)
@@ -137,9 +143,9 @@ func startHTTPServer(db *sql.DB) {
 		}
 
 		_, err = db.Exec(`
-		INSERT INTO sessions (id, user_id, expires_at)
-		VALUES (?, ?, datetime('now', '+1 day'))
-	`, sessionID, userID)
+	INSERT INTO sessions (id, user_id, expires_at)
+	VALUES (?, ?, datetime('now', '+1 day'))
+`, sessionID, userID)
 
 		if err != nil {
 			http.Error(w, "Erreur session", http.StatusInternalServerError)
@@ -157,50 +163,30 @@ func startHTTPServer(db *sql.DB) {
 			Path:     "/",
 		})
 
-		http.Redirect(w, r, "/profil", http.StatusSeeOther)
-	})
+		http.Redirect(w, r, "/profile", http.StatusSeeOther)
+	}
+}
 
-	http.HandleFunc("/profil", func(w http.ResponseWriter, r *http.Request) {
+func Cookies(w http.ResponseWriter, r *http.Request) {
+	// Again, should use templates
+	if r.Method != http.MethodGet {
+		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
 
-		sessionID, err := GetSessionCookie(r)
+	http.ServeFile(w, r, "templates/cookies.html")
+}
 
-		if err != nil {
-			http.Error(w, "Vous n'êtes pas connecté", http.StatusUnauthorized)
-			return
-		}
-
-		var userID string
-
-		err = db.QueryRow(`
-		SELECT user_id
-		FROM sessions
-		WHERE id = ?
-		AND expires_at > datetime('now')
-	`, sessionID).Scan(&userID)
-
-		if err != nil {
-			http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
-			return
-		}
-
-		fmt.Fprintf(w, "Vous êtes connecté. User ID : %s\n", userID)
-	})
-
-	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
-
-		sessionID, err := GetSessionCookie(r)
+func Logout(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		sessionID, err := login.GetSessionCookie(r)
 
 		if err == nil {
 			db.Exec("DELETE FROM sessions WHERE id = ?", sessionID)
 		}
 
-		DeleteSessionCookie(w)
+		login.DeleteSessionCookie(w)
 
 		fmt.Fprintln(w, "Déconnexion réussie")
-	})
-
-	fmt.Println("Serveur HTTP lancé sur http://localhost:8080")
-
-	http.ListenAndServe(":8080", nil)
-
+	}
 }

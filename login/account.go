@@ -1,10 +1,11 @@
-package main
+package login
 
 import (
 	"database/sql"
-	"fmt"
+	"errors"
 
 	"github.com/gofrs/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func CreateAccount(db *sql.DB, username string, email string, password string) error {
@@ -25,10 +26,10 @@ func CreateAccount(db *sql.DB, username string, email string, password string) e
 		return err
 	}
 	if exists {
-		return fmt.Errorf("cet email est déjà utilisé")
+		return errors.New("email déjà utilisé")
 	}
 
-	hash, err := HashPassword(password)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
@@ -36,13 +37,11 @@ func CreateAccount(db *sql.DB, username string, email string, password string) e
 	_, err = db.Exec(`
 		INSERT INTO users (id, username, email, password_hash)
 		VALUES (?, ?, ?, ?)
-	`, id.String(), username, email, hash)
+	`, id.String(), username, email, string(hash))
 
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("Compte créé avec succès")
 
 	return nil
 }
@@ -59,14 +58,13 @@ func Login(db *sql.DB, email string, password string) (string, error) {
 	`, email).Scan(&userID, &hash)
 
 	if err != nil {
-		return "", fmt.Errorf("email ou mot de passe incorrect")
+		return "", errors.New("email ou mot de passe incorrect")
 	}
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 
-	if !CheckPasswordHash(password, hash) {
-		return "", fmt.Errorf("email ou mot de passe incorrect")
+	if err != nil {
+		return "", errors.New("email ou mot de passe incorrect")
 	}
-
-	fmt.Println("Connexion réussie")
 
 	return userID, nil
 }
