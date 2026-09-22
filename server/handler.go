@@ -10,7 +10,12 @@ import (
 
 func Index(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Need to add template parsing and execution
+
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+
 		http.ServeFile(w, r, "templates/index.html")
 	}
 }
@@ -163,7 +168,7 @@ func AcceptCookies(db *sql.DB) http.HandlerFunc {
 			Path:     "/",
 		})
 
-		http.Redirect(w, r, "/profile", http.StatusSeeOther)
+		http.Redirect(w, r, "/create-post", http.StatusSeeOther)
 	}
 }
 
@@ -189,4 +194,14 @@ func Logout(db *sql.DB) http.HandlerFunc {
 
 		fmt.Fprintln(w, "Déconnexion réussie")
 	}
+}
+
+func CreatePostPage(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
+
+	http.ServeFile(w, r, "templates/create-post.html")
 }

@@ -29,9 +29,13 @@ func StartHTTPServer(db *sql.DB) {
 	http.HandleFunc("GET /logout", Logout(db))
 
 	http.HandleFunc("GET /cookies", Cookies)
-	http.HandleFunc("GET /accept-cookies", AcceptCookies(db))
+	http.HandleFunc("POST /accept-cookies", AcceptCookies(db))
 
 	http.HandleFunc("GET /profile", Profile(db))
+	http.HandleFunc("POST /posts", CreatePost(db))
+	http.HandleFunc("GET /posts", ReadPosts(db))
+
+	http.HandleFunc("GET /create-post", CreatePostPage)
 
 	greet()
 

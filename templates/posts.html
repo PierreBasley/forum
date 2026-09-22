@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Publications - Forum</title>
+
+    <link rel="stylesheet" href="/static/posts.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Publications du forum</h1>
+
+        <div class="top-bar">
+            <a href="/create-post">Créer une publication</a>
+        </div>
+
+        {{if .}}
+
+            {{range .}}
+
+            <article class="post">
+
+                <h2>{{.Title}}</h2>
+
+                <div class="author">
+                    Publié par <strong>{{.Username}}</strong>
+                </div>
+
+                <div class="content">
+                    {{.Content}}
+                </div>
+
+                {{if .Categories}}
+                <div class="categories">
+                    {{range .Categories}}
+                    <span class="category">{{.}}</span>
+                    {{end}}
+                </div>
+                {{end}}
+
+                <div class="date">
+                    Publié le {{.CreatedAt.Format "02/01/2006 à 15:04"}}
+                </div>
+
+            </article>
+
+            {{end}}
+
+        {{else}}
+
+            <div class="empty">
+                <p>Aucune publication pour le moment.</p>
+            </div>
+
+        {{end}}
+
+    </div>
+
+</body>
+</html>

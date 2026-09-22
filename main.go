@@ -17,9 +17,7 @@ func main() {
 
 	defer db.Close()
 
-	// SQL (requests and initialization) should be written in script files,
-	// then read from
-	// Ideally, prepared requests should be made
+	// Table des utilisateurs
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id TEXT PRIMARY KEY,
@@ -33,6 +31,23 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Initially, this was executed on a different thread (using go statement)
+	// Table des posts
+	// Chaque post appartient à un utilisateur grâce à user_id.
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS posts (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			title TEXT NOT NULL,
+			content TEXT NOT NULL,
+			categories TEXT,
+			created_at DATETIME NOT NULL,
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		)
+	`)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	server.StartHTTPServer(db)
 }
