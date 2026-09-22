@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer un post</title>
+</head>
+<body>
+
+    <h1>Créer un nouveau post</h1>
+
+    <form action="/posts" method="POST">
+
+        <label for="title">Titre :</label><br>
+        <input type="text" id="title" name="title" required><br><br>
+
+        <label for="content">Contenu :</label><br>
+        <textarea id="content" name="content" required></textarea><br><br>
+
+        <label>Catégories :</label><br>
+        <input type="checkbox" id="cat-sql" name="categories" value="sql">
+        <label for="cat-sql">SQL</label><br>
+
+        <input type="checkbox" id="cat-go" name="categories" value="go">
+        <label for="cat-go">Go</label><br>
+
+        <input type="checkbox" id="cat-html" name="categories" value="html">
+        <label for="cat-html">HTML</label><br><br>
+
+        <button type="submit">Publier</button>
+
+    </form>
+
+</body>
+</html>
