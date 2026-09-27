@@ -24,14 +24,13 @@ func StartHTTPServer(db *sql.DB) {
 	}
 
 	http.HandleFunc("/", Index(db))
-	http.HandleFunc("POST /login", LoginHandler(db))
-	http.HandleFunc("POST /register", Register(db))
+	http.HandleFunc("/login", LoginHandler(db))
+	http.HandleFunc("/register", RegisterHandler(db))
+	http.HandleFunc("/profile", Profile(db))
 	http.HandleFunc("GET /logout", Logout(db))
 
 	http.HandleFunc("GET /cookies", Cookies)
 	http.HandleFunc("GET /accept-cookies", AcceptCookies(db))
-
-	http.HandleFunc("GET /profile", Profile(db))
 
 	greet()
 
