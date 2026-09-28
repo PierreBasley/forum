@@ -16,7 +16,7 @@
         <h1>Publications du forum</h1>
 
         <div class="top-bar">
-            <a href="/create-post">Créer une publication</a>
+            <a href="/login">Créer une publication</a>
         </div>
 
         {{if .}}
@@ -42,6 +42,11 @@
                     {{end}}
                 </div>
                 {{end}}
+
+                <div class="reactions">
+                    <span>👍 {{.Likes}}</span>
+                    <span>👎 {{.Dislikes}}</span>
+                </div>
 
                 <div class="date">
                     Publié le {{.CreatedAt.Format "02/01/2006 à 15:04"}}

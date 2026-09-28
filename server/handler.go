@@ -16,7 +16,7 @@ func Index(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		http.ServeFile(w, r, "templates/index.html")
+		http.Redirect(w, r, "/posts", http.StatusSeeOther)
 	}
 }
 
@@ -196,12 +196,43 @@ func Logout(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func CreatePostPage(w http.ResponseWriter, r *http.Request) {
+func CreatePostPage(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
+		if r.Method != http.MethodGet {
+			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+			return
+		}
+
+		sessionID, err := login.GetSessionCookie(r)
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		var userID string
+
+		err = db.QueryRow(`
+			SELECT user_id
+			FROM sessions
+			WHERE id = ?
+			AND expires_at > datetime('now')
+		`, sessionID).Scan(&userID)
+
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		http.ServeFile(w, r, "templates/create-post.html")
+	}
+}
+
+func LoginPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 		return
 	}
 
-	http.ServeFile(w, r, "templates/create-post.html")
+	http.ServeFile(w, r, "templates/index.html")
 }

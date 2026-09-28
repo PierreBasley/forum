@@ -24,6 +24,7 @@ func StartHTTPServer(db *sql.DB) {
 	}
 
 	http.HandleFunc("/", Index(db))
+	http.HandleFunc("GET /login", LoginPage)
 	http.HandleFunc("POST /login", LoginHandler(db))
 	http.HandleFunc("POST /register", Register(db))
 	http.HandleFunc("GET /logout", Logout(db))
@@ -35,7 +36,7 @@ func StartHTTPServer(db *sql.DB) {
 	http.HandleFunc("POST /posts", CreatePost(db))
 	http.HandleFunc("GET /posts", ReadPosts(db))
 
-	http.HandleFunc("GET /create-post", CreatePostPage)
+	http.HandleFunc("GET /create-post", CreatePostPage(db))
 
 	greet()
 

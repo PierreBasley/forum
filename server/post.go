@@ -3,6 +3,7 @@ package server
 import (
 	"database/sql"
 	"html/template"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -20,6 +21,8 @@ type Post struct {
 	Content    string
 	Categories []string
 	CreatedAt  time.Time
+	Likes      int
+	Dislikes   int
 }
 
 // CreatePost crée un post pour l'utilisateur connecté.
@@ -93,7 +96,8 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 		)
 
 		if err != nil {
-			http.Error(w, "Erreur enregistrement du post", http.StatusInternalServerError)
+			log.Println("ERREUR SQL READ POSTS :", err)
+			http.Error(w, "Erreur récupération des posts", http.StatusInternalServerError)
 			return
 		}
 
@@ -110,39 +114,21 @@ func ReadPosts(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		sessionID, err := login.GetSessionCookie(r)
-		if err != nil {
-			http.Error(w, "Vous devez être connecté", http.StatusUnauthorized)
-			return
-		}
-
-		var userID string
-
-		err = db.QueryRow(`
-			SELECT user_id
-			FROM sessions
-			WHERE id = ?
-			AND expires_at > datetime('now')
-		`, sessionID).Scan(&userID)
-
-		if err != nil {
-			http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
-			return
-		}
-
 		rows, err := db.Query(`
-			SELECT
-				posts.id,
-				posts.user_id,
-				users.username,
-				posts.title,
-				posts.content,
-				posts.categories,
-				posts.created_at
-			FROM posts
-			JOIN users ON users.id = posts.user_id
-			ORDER BY posts.created_at DESC
-		`)
+	SELECT
+		posts.id,
+		posts.user_id,
+		users.username,
+		posts.title,
+		posts.content,
+		posts.categories,
+		posts.created_at,
+		posts.likes,
+		posts.dislikes
+	FROM posts
+	JOIN users ON users.id = posts.user_id
+	ORDER BY posts.created_at DESC
+`)
 
 		if err != nil {
 			http.Error(w, "Erreur récupération des posts", http.StatusInternalServerError)
@@ -166,6 +152,8 @@ func ReadPosts(db *sql.DB) http.HandlerFunc {
 				&post.Content,
 				&categoryText,
 				&post.CreatedAt,
+				&post.Likes,
+				&post.Dislikes,
 			)
 
 			if err != nil {
