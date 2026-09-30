@@ -398,3 +398,95 @@ func TwoFactorHandler(db *sql.DB) http.HandlerFunc {
 		http.Redirect(w, r, "/cookies", http.StatusSeeOther)
 	}
 }
+
+func ForgotPasswordPage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
+
+	http.ServeFile(w, r, "templates/forgot-password.html")
+}
+
+func ForgotPasswordHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+			return
+		}
+
+		email := r.FormValue("email")
+
+		if email == "" {
+			http.Error(w, "Email obligatoire", http.StatusBadRequest)
+			return
+		}
+
+		err := login.CreatePasswordResetCode(db, email)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		http.Redirect(w, r, "/reset-password", http.StatusSeeOther)
+	}
+}
+
+func ResetPasswordPage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
+
+	http.ServeFile(w, r, "templates/reset-password.html")
+}
+
+func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+			return
+		}
+
+		email := r.FormValue("email")
+		code := r.FormValue("code")
+		password := r.FormValue("password")
+		passwordConfirm := r.FormValue("password_confirm")
+
+		if email == "" || code == "" || password == "" || passwordConfirm == "" {
+			http.Error(w, "Tous les champs sont obligatoires", http.StatusBadRequest)
+			return
+		}
+
+		if len(code) != 6 {
+			http.Error(w, "Le code doit contenir 6 chiffres", http.StatusBadRequest)
+			return
+		}
+
+		for _, char := range code {
+			if char < '0' || char > '9' {
+				http.Error(w, "Le code doit contenir uniquement des chiffres", http.StatusBadRequest)
+				return
+			}
+		}
+
+		if password != passwordConfirm {
+			http.Error(w, "Les mots de passe ne correspondent pas", http.StatusBadRequest)
+			return
+		}
+
+		userID, err := login.VerifyPasswordResetCode(db, email, code)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		err = login.ResetPassword(db, userID, password)
+		if err != nil {
+			http.Error(w, "Erreur modification du mot de passe", http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+	}
+}
