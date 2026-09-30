@@ -16,8 +16,17 @@ func Index(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
 	}
+}
+
+func Visitor(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		return
+	}
+
+	http.Redirect(w, r, "/posts", http.StatusSeeOther)
 }
 
 func LoginHandler(db *sql.DB) http.HandlerFunc {
