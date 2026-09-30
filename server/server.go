@@ -2,26 +2,11 @@ package server
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 )
 
 func StartHTTPServer(db *sql.DB) {
-	// SQL scripts should be read directly from a file and executed, not
-	// hardcoded
-	_, err := db.Exec(`
-	CREATE TABLE IF NOT EXISTS sessions (
-		id TEXT PRIMARY KEY,
-		user_id TEXT NOT NULL,
-		expires_at DATETIME NOT NULL
-	)
-`)
-
-	if err != nil {
-		fmt.Println("Erreur création sessions :", err)
-		return
-	}
 
 	http.HandleFunc("/", Index(db))
 	http.HandleFunc("/login", LoginHandler(db))

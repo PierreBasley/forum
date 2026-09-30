@@ -1,0 +1,109 @@
+package server
+
+import (
+	"database/sql"
+	"forum/login"
+	"log"
+)
+
+func CreationDB() (*sql.DB, error) {
+	// YF: SQL scripts should be read directly from a file and executed, not hardcoded
+
+	//Creation or opening of the database "db.sqlite"
+	db, err := sql.Open("sqlite3", "bdd/db.sqlite")
+	if err != nil {
+		return db, err
+	}
+
+	//Use of PRAGMA command to enable the foreign keys which are disabled by default
+	_, err = db.Exec(`
+	PRAGMA foreign_keys = ON;
+	`)
+	if err != nil {
+		log.Println("Problème dans la commande PRAGMA")
+		return db, err
+	}
+
+	//Creation of the differents tables thanks to the following commands
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS users (
+		id TEXT PRIMARY KEY,
+		username VARCHAR(100) NOT NULL UNIQUE,
+		email VARCHAR(100) NOT NULL UNIQUE,
+		created_at TEXT NOT NULL,
+		password_hash TEXT NOT NULL,
+		roles_id INTEGER NOT NULL,
+		FOREIGN KEY (roles_id) REFERENCES roles(id)
+	)
+	`)
+	if err != nil {
+		log.Println("Problème dans la création de la table users")
+		return db, err
+	}
+
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS roles (
+		id INTEGER PRIMARY KEY,
+		name VARCHAR(100) NOT NULL
+	)
+	`)
+	if err != nil {
+		return db, err
+	}
+
+	//implementation of the different roles inside the DB
+	_, err = db.Exec(`
+	INSERT INTO roles(name) VALUES
+	('user'),
+	('moderator'),
+	('admin')
+	`)
+	if err != nil {
+		log.Println("impossible de remplir la table role")
+		return db, err
+	}
+
+	//creation of the root admin account. If it already exist, nothing will happen
+	var exists bool
+	err = db.QueryRow(`
+		SELECT EXISTS(SELECT 1 FROM users WHERE username = 'Root' AND email = 'root@caramail.com')
+	̀`).Scan(&exists)
+	if err != nil {
+		return db, err
+	}
+	if exists == true {
+		log.Println("Compte Root déjà créé")
+	} else {
+		err = rootAccount(db)
+		if err != nil {
+			log.Println("Erreur dans la création du compte Root")
+		}
+	}
+
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS sessions (
+		id TEXT PRIMARY KEY,
+		user_id TEXT NOT NULL,
+		expires_at DATETIME NOT NULL
+	)
+	`)
+	if err != nil {
+		log.Println("Erreur création sessions :", err)
+		return db, err
+	}
+
+	return db, nil
+}
+
+func rootAccount(db *sql.DB) error {
+
+	username := "Root"
+	email := "root@caramail.com"
+	password := "rootTest12345"
+
+	err := login.CreateAccount(db, username, email, password)
+	if err != nil {
+		return err
+	}
+	return nil
+}

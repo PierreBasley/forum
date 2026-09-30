@@ -1,11 +1,13 @@
 package server
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
 	"forum/login"
 	"html/template"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -28,24 +30,67 @@ func parseTemplates(filenames string) (*template.Template, error) {
 	return t, err
 }
 
+func executeBuffer(t *template.Template, w http.ResponseWriter) (http.ResponseWriter, error) {
+	var buffer bytes.Buffer
+
+	err := t.Execute(&buffer, nil) //add the right variable as data to be rendered in the website
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return w, err
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Length", strconv.Itoa(buffer.Len())) //Eventually, AI told me this part is not an obligation because the go server can handle this without problem
+
+	_, err = w.Write(buffer.Bytes())
+	if err != nil {
+		return w, err
+	}
+	return w, err
+}
+
 func Index(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Need to add template parsing and execution
-		// var buffer bytes.Buffer
+		// YF: Need to add template parsing and execution.
+		// PB : Done + integration of the buffer
+
+		if r.URL.Path != "/" {
+			http.Error(w, "Erreur 404", http.StatusNotFound)
+			return
+		}
+
 		t, err := parseTemplates(INDEX_PATH)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// w.Header().Set("Content-Type:", "text/html; charset=utf-8")
-		// w.Header().Set("Content-Length", strconv.Itoa(buffer.Len()))
-		// w.Write(buffer.Bytes())
-
-		err = t.Execute(w, nil) //add the right variable as data to be rendered in the website
+		w, err = executeBuffer(t, w)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+
+		// var buffer bytes.Buffer
+
+		// t, err := parseTemplates(INDEX_PATH)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+
+		// err = t.Execute(&buffer, nil) //add the right variable as data to be rendered in the website
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+
+		// w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		// w.Header().Set("Content-Length", strconv.Itoa(buffer.Len())) //Eventually, AI told me this part is not an obligation because the go server handle this without problem
+
+		// _, err = w.Write(buffer.Bytes())
+		// if err != nil {
+		// 	return
+		// }
 	}
 }
 
@@ -60,10 +105,20 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 				return
 			}
 
-			err = t.Execute(w, nil) //add the right variable as data to be rendered in the website
+			w, err = executeBuffer(t, w)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
 			}
+			// t, err := parseTemplates(LOGIN_PATH)
+			// if err != nil {
+			// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+			// 	return
+			// }
+
+			// err = t.Execute(w, nil)
+			// if err != nil {
+			// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+			// }
 
 		case http.MethodPost:
 
@@ -105,11 +160,22 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 				return
 			}
 
-			err = t.Execute(w, nil)
+			w, err = executeBuffer(t, w)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+
+			// t, err := parseTemplates(REGISTER_PATH)
+			// if err != nil {
+			// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+			// 	return
+			// }
+
+			// err = t.Execute(w, nil)
+			// if err != nil {
+			// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+			// 	return
+			// }
 
 		case http.MethodPost:
 
@@ -167,7 +233,13 @@ func Profile(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		t, err := parseTemplates(PROFILE_PATH)
+		// t, err := parseTemplates(PROFILE_PATH)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+
+		t, err := parseTemplates(REGISTER_PATH)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -187,10 +259,15 @@ func Profile(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		err = t.Execute(w, nil) //add the right variable as data to be rendered in the website
+		w, err = executeBuffer(t, w)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+
+		// err = t.Execute(w, nil) //add the right variable as data to be rendered in the website
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// }
 	}
 }
 

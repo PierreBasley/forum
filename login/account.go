@@ -3,6 +3,8 @@ package login
 import (
 	"database/sql"
 	"errors"
+	"log"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -21,7 +23,6 @@ func CreateAccount(db *sql.DB, username string, email string, password string) e
 		"SELECT EXISTS(SELECT 1 FROM users WHERE email = ?)",
 		email,
 	).Scan(&exists)
-
 	if err != nil {
 		return err
 	}
@@ -34,12 +35,21 @@ func CreateAccount(db *sql.DB, username string, email string, password string) e
 		return err
 	}
 
+	role := 1
+	if username == "Root" && email == "root@caramail.com" {
+		role = 3
+	}
+
+	date := time.Now().String()
+	creationDate := date[0:19]
+
 	_, err = db.Exec(`
-		INSERT INTO users (id, username, email, password_hash)
-		VALUES (?, ?, ?, ?)
-	`, id.String(), username, email, string(hash))
+		INSERT INTO users (id, username, email, created_at, password_hash, roles_id)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`, id.String(), username, email, creationDate, string(hash), role)
 
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
@@ -58,13 +68,31 @@ func Login(db *sql.DB, email string, password string) (string, error) {
 	`, email).Scan(&userID, &hash)
 
 	if err != nil {
+		log.Println("Utilisateur inconnu dans la base de données")
 		return "", errors.New("email ou mot de passe incorrect")
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 
 	if err != nil {
+		log.Println("mot de passe différent entre les deux hash")
 		return "", errors.New("email ou mot de passe incorrect")
 	}
 
 	return userID, nil
 }
+
+// func rolesAttribution(username string) int {
+// 	userRight := 1
+// 	//moderatorRight := 2
+// 	adminRight := 3
+
+// 	admins := []string{"Root", "AbdouCHERIF", "HichamHEE", "PierreBASLEY", "YohannFEDAOUI"}
+
+// 	for _, admin := range admins {
+// 		if admin == username {
+// 			return adminRight
+// 		}
+// 	}
+
+// 	return userRight
+//}

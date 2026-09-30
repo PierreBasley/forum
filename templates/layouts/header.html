@@ -1,20 +1,22 @@
 {{define "header"}}
 <header>
     <h1><a href="/">Forum</a></h1>
+    {{if .}}
+    <h2>Session</h2>
+    <p>
+        <a href="/profil">Voir mon profil</a>
+    </p>
+    <p>
+        <a href="/logout">Se déconnecter</a>
+    </p>
+    {{else}}
     <nav>
         <ul>
             <li><a href="/login">Se connecter</a></li>
             <li><a href="/register">Créer un compte</a></li>
         </ul>
     </nav>
-
-    <!--<h2>Session</h2>
-    <p>
-        <a href="/profil">Voir mon profil</a>
-    </p>
-    <p>
-        <a href="/logout">Se déconnecter</a>
-    </p>-->
+    {{end}}
 </header>
 <hr>
 {{end}}
