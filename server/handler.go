@@ -1,16 +1,10 @@
 package server
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"fmt"
 	"forum/login"
-	"math/big"
 	"net/http"
-	"net/smtp"
-	"os"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -94,13 +88,13 @@ func Register(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		code, err := generateTwoFactorCode()
+		code, err := login.GenerateTwoFactorCode()
 		if err != nil {
 			http.Error(w, "Erreur génération du code", http.StatusInternalServerError)
 			return
 		}
 
-		codeHash := hashTwoFactorCode(code)
+		codeHash := login.HashTwoFactorCode(code)
 
 		codeID, err := uuid.NewV4()
 		if err != nil {
@@ -133,7 +127,7 @@ func Register(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		err = sendTwoFactorEmail(email, code)
+		err = login.SendTwoFactorEmail(email, code)
 		if err != nil {
 			fmt.Println("ERREUR SMTP :", err)
 
@@ -310,58 +304,6 @@ func LoginPage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "templates/index.html")
 }
 
-func generateTwoFactorCode() (string, error) {
-	n, err := rand.Int(rand.Reader, big.NewInt(1000000))
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%06d", n.Int64()), nil
-}
-
-func hashTwoFactorCode(code string) string {
-	hash := sha256.Sum256([]byte(code))
-	return hex.EncodeToString(hash[:])
-}
-
-func sendTwoFactorEmail(destination string, code string) error {
-	smtpEmail := os.Getenv("SMTP_EMAIL")
-	smtpPassword := os.Getenv("SMTP_PASSWORD")
-
-	if smtpEmail == "" || smtpPassword == "" {
-		fmt.Println("DEBUG SMTP_EMAIL présent :", smtpEmail != "")
-		fmt.Println("DEBUG SMTP_PASSWORD présent :", smtpPassword != "")
-		return fmt.Errorf("SMTP_EMAIL ou SMTP_PASSWORD manquant")
-	}
-
-	auth := smtp.PlainAuth(
-		"",
-		smtpEmail,
-		smtpPassword,
-		"smtp.gmail.com",
-	)
-
-	message := []byte(
-		"From: " + smtpEmail + "\r\n" +
-			"To: " + destination + "\r\n" +
-			"Subject: Code de verification - Forum\r\n" +
-			"MIME-Version: 1.0\r\n" +
-			"Content-Type: text/plain; charset=UTF-8\r\n" +
-			"\r\n" +
-			"Votre code de verification est : " + code + "\r\n\r\n" +
-			"Ce code est valable pendant 5 minutes.\r\n" +
-			"Si vous n'etes pas a l'origine de cette connexion, ignorez cet email.\r\n",
-	)
-
-	return smtp.SendMail(
-		"smtp.gmail.com:587",
-		auth,
-		smtpEmail,
-		[]string{destination},
-		message,
-	)
-}
-
 func TwoFactorPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
@@ -411,7 +353,7 @@ func TwoFactorHandler(db *sql.DB) http.HandlerFunc {
 			}
 		}
 
-		codeHash := hashTwoFactorCode(code)
+		codeHash := login.HashTwoFactorCode(code)
 
 		var codeID string
 
