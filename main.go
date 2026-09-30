@@ -32,7 +32,6 @@ func main() {
 	}
 
 	// Table des posts
-	// Chaque post appartient à un utilisateur grâce à user_id.
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS posts (
 			id TEXT PRIMARY KEY,
@@ -41,6 +40,22 @@ func main() {
 			content TEXT NOT NULL,
 			categories TEXT,
 			created_at DATETIME NOT NULL,
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		)
+	`)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Table des codes 2FA
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS two_factor_codes (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			code_hash TEXT NOT NULL,
+			expires_at DATETIME NOT NULL,
+			used INTEGER NOT NULL DEFAULT 0,
 			FOREIGN KEY (user_id) REFERENCES users(id)
 		)
 	`)

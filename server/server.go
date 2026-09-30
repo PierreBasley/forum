@@ -26,7 +26,9 @@ func StartHTTPServer(db *sql.DB) {
 	http.HandleFunc("/", Index(db))
 	http.HandleFunc("GET /login", LoginPage)
 	http.HandleFunc("GET /visitor", Visitor)
+	http.HandleFunc("GET /2fa", TwoFactorPage)
 	http.HandleFunc("POST /login", LoginHandler(db))
+	http.HandleFunc("POST /2fa", TwoFactorHandler(db))
 	http.HandleFunc("POST /register", Register(db))
 	http.HandleFunc("GET /logout", Logout(db))
 

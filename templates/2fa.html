@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Vérification - Forum</title>
+</head>
+
+<body>
+
+    <h1>Vérification en deux étapes</h1>
+
+    <p>
+        Un code de vérification à 6 chiffres vient d'être envoyé
+        à votre adresse email.
+    </p>
+
+    <p>
+        Ce code est valable pendant 5 minutes.
+    </p>
+
+    <form action="/2fa" method="POST">
+
+        <label for="code">
+            Code de vérification :
+        </label>
+
+        <br>
+
+        <input
+            type="text"
+            id="code"
+            name="code"
+            inputmode="numeric"
+            pattern="[0-9]{6}"
+            maxlength="6"
+            minlength="6"
+            autocomplete="one-time-code"
+            required
+        >
+
+        <br><br>
+
+        <button type="submit">
+            Vérifier le code
+        </button>
+
+    </form>
+
+</body>
+
+</html>
