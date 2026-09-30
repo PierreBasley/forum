@@ -33,6 +33,7 @@ func StartHTTPServer(db *sql.DB) {
 	http.HandleFunc("GET /reset-password", ResetPasswordPage)
 	http.HandleFunc("POST /reset-password", ResetPasswordHandler(db))
 	http.HandleFunc("POST /2fa", TwoFactorHandler(db))
+	http.HandleFunc("POST /2fa/resend", ResendTwoFactorHandler(db))
 	http.HandleFunc("POST /register", Register(db))
 	http.HandleFunc("GET /logout", Logout(db))
 

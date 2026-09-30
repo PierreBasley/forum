@@ -106,6 +106,7 @@ func Register(db *sql.DB) http.HandlerFunc {
 			`DELETE FROM two_factor_codes WHERE user_id = ?`,
 			userID,
 		)
+
 		if err != nil {
 			http.Error(w, "Erreur préparation 2FA", http.StatusInternalServerError)
 			return
@@ -164,6 +165,7 @@ func Register(db *sql.DB) http.HandlerFunc {
 
 		http.Redirect(w, r, "/2fa", http.StatusSeeOther)
 	}
+
 }
 
 func Profile(db *sql.DB) http.HandlerFunc {
@@ -341,6 +343,17 @@ func TwoFactorHandler(db *sql.DB) http.HandlerFunc {
 		userID := cookie.Value
 		code := r.FormValue("code")
 
+		blocked, err := login.IsTwoFactorBlocked(db, userID)
+		if err != nil {
+			http.Error(w, "Erreur vérification du compte", http.StatusInternalServerError)
+			return
+		}
+
+		if blocked {
+			http.Error(w, "Compte bloqué après 5 tentatives 2FA", http.StatusForbidden)
+			return
+		}
+
 		if len(code) != 6 {
 			http.Error(w, "Le code doit contenir 6 chiffres", http.StatusBadRequest)
 			return
@@ -369,7 +382,23 @@ func TwoFactorHandler(db *sql.DB) http.HandlerFunc {
 		`, userID, codeHash).Scan(&codeID)
 
 		if err != nil {
-			http.Error(w, "Code incorrect ou expiré", http.StatusUnauthorized)
+			attempts, attemptErr := login.AddTwoFactorAttempt(db, userID)
+
+			if attemptErr != nil {
+				http.Error(w, "Erreur gestion des tentatives", http.StatusInternalServerError)
+				return
+			}
+
+			if attempts >= 5 {
+				http.Error(w, "Compte bloqué après 5 tentatives 2FA", http.StatusForbidden)
+				return
+			}
+
+			http.Error(
+				w,
+				fmt.Sprintf("Code incorrect ou expiré. Tentative %d/5.", attempts),
+				http.StatusUnauthorized,
+			)
 			return
 		}
 
@@ -382,6 +411,12 @@ func TwoFactorHandler(db *sql.DB) http.HandlerFunc {
 
 		if err != nil {
 			http.Error(w, "Erreur validation du code", http.StatusInternalServerError)
+			return
+		}
+
+		err = login.ResetTwoFactorAttempts(db, userID)
+		if err != nil {
+			http.Error(w, "Erreur réinitialisation des tentatives", http.StatusInternalServerError)
 			return
 		}
 
@@ -488,5 +523,103 @@ func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
+	}
+}
+
+func ResendTwoFactorHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+			return
+		}
+
+		cookie, err := r.Cookie("pending_user_id")
+		if err != nil {
+			http.Error(w, "Aucune authentification en attente", http.StatusUnauthorized)
+			return
+		}
+
+		userID := cookie.Value
+
+		blocked, err := login.IsTwoFactorBlocked(db, userID)
+		if err != nil {
+			http.Error(w, "Erreur vérification du compte", http.StatusInternalServerError)
+			return
+		}
+
+		if blocked {
+			http.Error(w, "Compte bloqué après 5 tentatives 2FA", http.StatusForbidden)
+			return
+		}
+
+		var email string
+
+		err = db.QueryRow(`
+			SELECT email
+			FROM users
+			WHERE id = ?
+		`, userID).Scan(&email)
+
+		if err != nil {
+			http.Error(w, "Utilisateur introuvable", http.StatusNotFound)
+			return
+		}
+
+		code, err := login.GenerateTwoFactorCode()
+		if err != nil {
+			http.Error(w, "Erreur génération du code", http.StatusInternalServerError)
+			return
+		}
+
+		codeHash := login.HashTwoFactorCode(code)
+
+		codeID, err := uuid.NewV4()
+		if err != nil {
+			http.Error(w, "Erreur génération du code", http.StatusInternalServerError)
+			return
+		}
+
+		_, err = db.Exec(`
+			DELETE FROM two_factor_codes
+			WHERE user_id = ?
+		`, userID)
+
+		if err != nil {
+			http.Error(w, "Erreur préparation du nouveau code", http.StatusInternalServerError)
+			return
+		}
+
+		_, err = db.Exec(`
+			INSERT INTO two_factor_codes (
+				id,
+				user_id,
+				code_hash,
+				expires_at,
+				used
+			)
+			VALUES (?, ?, ?, datetime('now', '+5 minutes'), 0)
+		`, codeID.String(), userID, codeHash)
+
+		if err != nil {
+			http.Error(w, "Erreur enregistrement du nouveau code", http.StatusInternalServerError)
+			return
+		}
+
+		err = login.SendTwoFactorEmail(email, code)
+		if err != nil {
+			_, _ = db.Exec(
+				`DELETE FROM two_factor_codes WHERE id = ?`,
+				codeID.String(),
+			)
+
+			http.Error(
+				w,
+				"Impossible d'envoyer le nouveau code par email",
+				http.StatusInternalServerError,
+			)
+			return
+		}
+
+		http.Redirect(w, r, "/2fa", http.StatusSeeOther)
 	}
 }

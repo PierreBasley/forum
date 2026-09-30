@@ -60,6 +60,20 @@ func main() {
 		)
 	`)
 
+	// Table des tentatives 2FA
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS two_factor_attempts (
+			user_id TEXT PRIMARY KEY,
+			attempts INTEGER NOT NULL DEFAULT 0,
+			blocked INTEGER NOT NULL DEFAULT 0,
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		)
+	`)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	if err != nil {
 		log.Fatal(err)
 	}

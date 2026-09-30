@@ -3,6 +3,7 @@ package login
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -61,4 +62,72 @@ func SendTwoFactorEmail(destination string, code string) error {
 		[]string{destination},
 		message,
 	)
+}
+
+func IsTwoFactorBlocked(db *sql.DB, userID string) (bool, error) {
+	var blocked int
+
+	err := db.QueryRow(`
+		SELECT blocked
+		FROM two_factor_attempts
+		WHERE user_id = ?
+	`, userID).Scan(&blocked)
+
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	return blocked == 1, nil
+}
+
+func AddTwoFactorAttempt(db *sql.DB, userID string) (int, error) {
+	_, err := db.Exec(`
+		INSERT INTO two_factor_attempts (user_id, attempts, blocked)
+		VALUES (?, 1, 0)
+		ON CONFLICT(user_id)
+		DO UPDATE SET attempts = attempts + 1
+	`, userID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	var attempts int
+
+	err = db.QueryRow(`
+		SELECT attempts
+		FROM two_factor_attempts
+		WHERE user_id = ?
+	`, userID).Scan(&attempts)
+
+	if err != nil {
+		return 0, err
+	}
+
+	if attempts >= 5 {
+		_, err = db.Exec(`
+			UPDATE two_factor_attempts
+			SET blocked = 1
+			WHERE user_id = ?
+		`, userID)
+
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return attempts, nil
+}
+
+func ResetTwoFactorAttempts(db *sql.DB, userID string) error {
+	_, err := db.Exec(`
+		DELETE FROM two_factor_attempts
+		WHERE user_id = ?
+	`, userID)
+
+	return err
 }
