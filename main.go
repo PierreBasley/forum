@@ -44,7 +44,7 @@ func main() {
 		)
 	`)
 
-	if err != nil {
+	/*if err != nil {
 		log.Fatal(err)
 	}
 
@@ -58,19 +58,19 @@ func main() {
 			used INTEGER NOT NULL DEFAULT 0,
 			FOREIGN KEY (user_id) REFERENCES users(id)
 		)
-	`)
+	`)*/
 
 	// Table des tentatives 2FA
-	_, err = db.Exec(`
+	/*_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS two_factor_attempts (
 			user_id TEXT PRIMARY KEY,
 			attempts INTEGER NOT NULL DEFAULT 0,
 			blocked INTEGER NOT NULL DEFAULT 0,
 			FOREIGN KEY (user_id) REFERENCES users(id)
 		)
-	`)
+	`)*/
 
-	if err != nil {
+	/*if err != nil {
 		log.Fatal(err)
 	}
 
@@ -87,7 +87,7 @@ func main() {
 		used INTEGER NOT NULL DEFAULT 0,
 		FOREIGN KEY (user_id) REFERENCES users(id)
 	)
-`)
+`)*/
 
 	if err != nil {
 		log.Fatal(err)

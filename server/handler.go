@@ -6,8 +6,7 @@ import (
 	"forum/login"
 	"net/http"
 	"time"
-
-	"github.com/gofrs/uuid"
+	//"github.com/gofrs/uuid"
 )
 
 func Index(db *sql.DB) http.HandlerFunc {
@@ -88,7 +87,7 @@ func Register(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		code, err := login.GenerateTwoFactorCode()
+		/*code, err := login.GenerateTwoFactorCode()
 		if err != nil {
 			http.Error(w, "Erreur génération du code", http.StatusInternalServerError)
 			return
@@ -143,7 +142,7 @@ func Register(db *sql.DB) http.HandlerFunc {
 				http.StatusInternalServerError,
 			)
 			return
-		}
+		}*/
 
 		http.SetCookie(w, &http.Cookie{
 			Name:     "pending_user_id",
@@ -306,6 +305,7 @@ func LoginPage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "templates/index.html")
 }
 
+/*
 func TwoFactorPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
@@ -623,3 +623,4 @@ func ResendTwoFactorHandler(db *sql.DB) http.HandlerFunc {
 		http.Redirect(w, r, "/2fa", http.StatusSeeOther)
 	}
 }
+*/
