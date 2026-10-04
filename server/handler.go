@@ -22,18 +22,19 @@ func Index(db *sql.DB) http.HandlerFunc {
 		// PB : Done + integration of the buffer
 
 		if r.URL.Path != "/" {
-			http.Error(w, "Erreur 404", http.StatusNotFound)
+			renderError(w, 404)
 			return
 		}
 
 		t, err := parseTemplates(INDEX_PATH)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			renderError(w, 500)
 			return
 		}
 
 		w, err = executeBuffer(t, w)
 		if err != nil {
+			renderError(w, 500)
 			return
 		}
 	}
@@ -46,12 +47,13 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		case http.MethodGet:
 			t, err := parseTemplates(LOGIN_PATH)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				renderError(w, 500)
 				return
 			}
 
 			w, err = executeBuffer(t, w)
 			if err != nil {
+				renderError(w, 500)
 				return
 			}
 
@@ -62,7 +64,7 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 
 			userID, err := login.Login(db, email, password)
 			if err != nil {
-				http.Error(w, "Email ou mot de passe incorrect", http.StatusUnauthorized)
+				renderError(w, 401)
 				return
 			}
 
@@ -78,7 +80,7 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 			http.Redirect(w, r, "/cookies", http.StatusSeeOther)
 
 		default:
-			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+			renderError(w, 405)
 			return
 		}
 	}
@@ -91,12 +93,13 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		case http.MethodGet:
 			t, err := parseTemplates(REGISTER_PATH)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				renderError(w, 500)
 				return
 			}
 
 			w, err = executeBuffer(t, w)
 			if err != nil {
+				renderError(w, 500)
 				return
 			}
 
@@ -108,14 +111,17 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			passwordConfirm := r.FormValue("password_confirm")
 
 			if password != passwordConfirm {
-				http.Error(w, "Les mots de passe ne correspondent pas", http.StatusBadRequest)
+				renderError(w, 400)
+				//is this the right http error code ?
+				//http.Error(w, "Les mots de passe ne correspondent pas", http.StatusBadRequest)
 				return
 			}
 
 			err := login.CreateAccount(db, name, email, password)
-
 			if err != nil {
-				http.Error(w, "Erreur création du compte", http.StatusBadRequest)
+				renderError(w, 400)
+				//is this the right http error code ?
+				//http.Error(w, "Erreur création du compte", http.StatusBadRequest)
 				return
 			}
 
@@ -127,7 +133,8 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			).Scan(&userID)
 
 			if err != nil {
-				http.Error(w, "Erreur récupération utilisateur", http.StatusInternalServerError)
+				renderError(w, 500)
+				//http.Error(w, "Erreur récupération utilisateur", http.StatusInternalServerError)
 				return
 			}
 
@@ -142,7 +149,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			http.Redirect(w, r, "/cookies", http.StatusSeeOther)
 
 		default:
-			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+			renderError(w, 405)
 			return
 		}
 	}
@@ -152,13 +159,13 @@ func Profile(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionID, err := login.GetSessionCookie(r)
 		if err != nil {
-			http.Error(w, "Vous n'êtes pas connecté", http.StatusUnauthorized)
+			renderError(w, 401)
 			return
 		}
 
 		t, err := parseTemplates(REGISTER_PATH)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			renderError(w, 500)
 			return
 		}
 
@@ -178,6 +185,7 @@ func Profile(db *sql.DB) http.HandlerFunc {
 
 		w, err = executeBuffer(t, w)
 		if err != nil {
+			renderError(w, 500)
 			return
 		}
 	}
@@ -186,7 +194,7 @@ func Profile(db *sql.DB) http.HandlerFunc {
 func AcceptCookies(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+			renderError(w, 405)
 			return
 		}
 
@@ -202,7 +210,7 @@ func AcceptCookies(db *sql.DB) http.HandlerFunc {
 		sessionID, err := login.CreateSessionCookie(w)
 
 		if err != nil {
-			http.Error(w, "Erreur création session", http.StatusInternalServerError)
+			renderError(w, 500)
 			return
 		}
 
@@ -212,7 +220,7 @@ func AcceptCookies(db *sql.DB) http.HandlerFunc {
 `, sessionID, userID)
 
 		if err != nil {
-			http.Error(w, "Erreur session", http.StatusInternalServerError)
+			renderError(w, 500)
 			return
 		}
 
@@ -234,7 +242,7 @@ func AcceptCookies(db *sql.DB) http.HandlerFunc {
 func Cookies(w http.ResponseWriter, r *http.Request) {
 	// Again, should use templates
 	if r.Method != http.MethodGet {
-		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		renderError(w, 405)
 		return
 	}
 

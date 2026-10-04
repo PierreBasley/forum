@@ -23,7 +23,6 @@ func executeBuffer(t *template.Template, w http.ResponseWriter) (http.ResponseWr
 
 	err := t.Execute(&buffer, nil) //add the right variable as data to be rendered in the website
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return w, err
 	}
 
