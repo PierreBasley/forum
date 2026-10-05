@@ -18,10 +18,10 @@ func parseTemplates(filenames string) (*template.Template, error) {
 	return t, err
 }
 
-func executeBuffer(t *template.Template, w http.ResponseWriter) (http.ResponseWriter, error) {
+func executeBuffer(t *template.Template, w http.ResponseWriter, data any) (http.ResponseWriter, error) {
 	var buffer bytes.Buffer
 
-	err := t.Execute(&buffer, nil) //add the right variable as data to be rendered in the website
+	err := t.Execute(&buffer, data) //add the right variable as data to be rendered in the website
 	if err != nil {
 		return w, err
 	}

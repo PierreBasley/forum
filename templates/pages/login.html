@@ -5,25 +5,27 @@
 {{template "header"}}
     <h2>Connexion</h2>
     <form action="/login" method="POST">
-        <p>
-            <label for="login-email">Email :</label><br>
+            <label for="login-email">Email :</label>
+            <br>
             <input
                 type="email"
                 id="login-email"
                 name="email"
                 required
             >
-        </p>
-        <p>
-            <label for="login-password">Mot de passe :</label><br>
+        <br>
+            <label for="login-password">Mot de passe :</label>
+            <br>
             <input
                 type="password"
                 id="login-password"
                 name="password"
                 required
             >
-        </p>
+        <br>
         <button type="submit">Se connecter</button>
+        <br>
+        <a href="/forgot-password">Mot de passe oublié ?</a>
     </form>
 {{template "footer"}}
 </body>

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"log"
-	"time"
 
 	"github.com/gofrs/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -35,18 +34,12 @@ func CreateAccount(db *sql.DB, username string, email string, password string) e
 		return err
 	}
 
-	role := 1
-	if username == "Root" && email == "root@caramail.com" {
-		role = 4
-	}
-
-	date := time.Now().String()
-	creationDate := date[0:19]
+	role := 2
 
 	_, err = db.Exec(`
-		INSERT INTO users (id, username, email, created_at, password_hash, roles_id)
-		VALUES (?, ?, ?, ?, ?, ?)
-	`, id.String(), username, email, creationDate, string(hash), role)
+		INSERT INTO users (id, username, email, password_hash, roles_id, created_at)
+		VALUES (?, ?, ?, ?, ?, datetime('now'))
+	`, id.String(), username, email, string(hash), role)
 
 	if err != nil {
 		log.Println(err)
@@ -68,6 +61,7 @@ func Login(db *sql.DB, email string, password string) (string, error) {
 	`, email).Scan(&userID, &hash)
 
 	if err != nil {
+		log.Println(err)
 		log.Println("Utilisateur inconnu dans la base de données")
 		return "", errors.New("email ou mot de passe incorrect")
 	}

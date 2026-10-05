@@ -30,6 +30,7 @@ func renderError(w http.ResponseWriter, status int) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Content-Length", strconv.Itoa(buffer.Len()))
+	w.WriteHeader(status)
 
 	_, err = w.Write(buffer.Bytes())
 	if err != nil {

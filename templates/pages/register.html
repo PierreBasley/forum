@@ -5,47 +5,44 @@
 {{template "header"}}
     <h2>Créer un compte</h2>
     <form action="/register" method="POST">
-        <p>
-            <label for="register-name">Nom :</label><br>
+            <label for="register-name">Nom :</label>
+            <br>
             <input
                 type="text"
                 id="register-name"
-                name="name"
+                name="username"
                 required
             >
-        </p>
-        <p>
-            <label for="register-email">Email :</label><br>
+            <br>
+            <label for="register-email">Email :</label>
+            <br>
             <input
                 type="email"
                 id="register-email"
                 name="email"
                 required
             >
-        </p>
-        <p>
-            <label for="register-password">Mot de passe :</label><br>
+            <br>
+            <label for="register-password">Mot de passe :</label>
+            <br>
             <input
                 type="password"
                 id="register-password"
                 name="password"
                 required
             >
-        </p>
-        <p>
-            <label for="register-password-confirm">
-                Confirmer le mot de passe :
-            </label><br>
+            <br>
+            <label for="register-password-confirm">Confirmer le mot de passe :</label>
+            <br>
             <input
                 type="password"
                 id="register-password-confirm"
                 name="password_confirm"
                 required
             >
-        </p>
+            <br>
         <button type="submit">Créer un compte</button>
     </form>
-    
 {{template "footer"}}
 </body>
 </html>

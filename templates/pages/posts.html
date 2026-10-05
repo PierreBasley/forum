@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+{{template "head"}}
+<body>
+{{template "header"}}
+    <div class="container">
+        <h2>Publications du forum</h2>
+        {{if .}}
+            {{range .}}
+            <article>
+                <h2>{{.Title}}</h2>
+                <div>
+                    Publié par <strong>{{.Username}}</strong>
+                </div>
+                <div>
+                    {{.Content}}
+                </div>
+                {{if .Categories}}
+                <div>
+                    {{range .Categories}}
+                    <span>{{.}}</span>
+                    {{end}}
+                </div>
+                {{end}}
+                <!-- <div class="reactions">
+                    <span>👍 0</span>
+                    <span>👎 0</span>
+                </div> -->
+                <div class="date">
+                    Publié le {{.CreatedAt}}
+                </div>
+            </article>
+            {{end}}
+        {{else}}
+            <div>
+                <p>Aucune publication pour le moment.</p>
+            </div>
+        {{end}}
+    </div>
+    {{template "footer"}}
+</body>
+</html>
