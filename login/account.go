@@ -37,7 +37,7 @@ func CreateAccount(db *sql.DB, username string, email string, password string) e
 
 	role := 1
 	if username == "Root" && email == "root@caramail.com" {
-		role = 3
+		role = 4
 	}
 
 	date := time.Now().String()
@@ -80,19 +80,3 @@ func Login(db *sql.DB, email string, password string) (string, error) {
 
 	return userID, nil
 }
-
-// func rolesAttribution(username string) int {
-// 	userRight := 1
-// 	//moderatorRight := 2
-// 	adminRight := 3
-
-// 	admins := []string{"Root", "AbdouCHERIF", "HichamHEE", "PierreBASLEY", "YohannFEDAOUI"}
-
-// 	for _, admin := range admins {
-// 		if admin == username {
-// 			return adminRight
-// 		}
-// 	}
-
-// 	return userRight
-//}

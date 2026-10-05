@@ -25,6 +25,30 @@ func CreationDB() (*sql.DB, error) {
 	}
 
 	//Creation of the differents tables thanks to the following commands
+
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS roles (
+		id INTEGER PRIMARY KEY,
+		name VARCHAR(100) NOT NULL UNIQUE
+	)
+	`)
+	if err != nil {
+		return db, err
+	}
+	//implementation of the different roles inside the DB
+	_, err = db.Exec(`
+	INSERT INTO roles(name) VALUES
+	('visitor'),
+	('user'),
+	('moderator'),
+	('admin')
+	ON CONFLICT DO NOTHING;
+	`)
+	if err != nil {
+		log.Println("impossible de remplir la table role")
+		return db, err
+	}
+
 	_, err = db.Exec(`
 	CREATE TABLE IF NOT EXISTS users (
 		id TEXT PRIMARY KEY,
@@ -38,28 +62,6 @@ func CreationDB() (*sql.DB, error) {
 	`)
 	if err != nil {
 		log.Println("Problème dans la création de la table users")
-		return db, err
-	}
-
-	_, err = db.Exec(`
-	CREATE TABLE IF NOT EXISTS roles (
-		id INTEGER PRIMARY KEY,
-		name VARCHAR(100) NOT NULL
-	)
-	`)
-	if err != nil {
-		return db, err
-	}
-
-	//implementation of the different roles inside the DB
-	_, err = db.Exec(`
-	INSERT INTO roles(name) VALUES
-	('user'),
-	('moderator'),
-	('admin')
-	`)
-	if err != nil {
-		log.Println("impossible de remplir la table role")
 		return db, err
 	}
 
@@ -82,9 +84,10 @@ func CreationDB() (*sql.DB, error) {
 
 	_, err = db.Exec(`
 	CREATE TABLE IF NOT EXISTS sessions (
-		id TEXT PRIMARY KEY,
-		user_id TEXT NOT NULL,
-		expires_at DATETIME NOT NULL
+		id TEXT PRIMARY KEY, 
+		user_id TEXT NOT NULL, 
+		created_at TEXT NOT NULL,
+		expires_at TEXT NOT NULL
 	)
 	`)
 	if err != nil {
