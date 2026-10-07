@@ -23,6 +23,8 @@ const (
 	CREATEPOST_PATH = PATH + "create-post.html"
 	POSTS_PATH      = PATH + "posts.html"
 	COOKIES_PATH    = PATH + "cookies.html"
+
+	COOKIE_NAME = "session_ID"
 )
 
 func Index(db *sql.DB, m *session.Manager) http.HandlerFunc {
@@ -88,14 +90,14 @@ func LoginHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				return
 			}
 
-			http.SetCookie(w, &http.Cookie{
-				Name:     "pending_user_id",
-				Value:    userID,
-				HttpOnly: true,
-				Secure:   false,
-				SameSite: http.SameSiteStrictMode,
-				Path:     "/",
-			})
+			sessionID, expiresAt, err := m.CreationSession(userID)
+			if err != nil {
+				renderError(w, 500)
+				return
+			}
+
+			cookieUser := login.CreateCookie(sessionID, expiresAt, COOKIE_NAME)
+			http.SetCookie(w, cookieUser)
 
 			http.Redirect(w, r, "/cookies", http.StatusSeeOther)
 
@@ -144,47 +146,26 @@ func RegisterHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			err := login.CreateAccount(db, username, email, password)
 			if err != nil {
 				renderError(w, 400)
-				//is this the right http error code ?
 				//http.Error(w, "Erreur création du compte", http.StatusBadRequest)
 				return
 			}
 
-			// 	userID, err := login.Login(db, email, password)
-			// if err != nil {
-			// 	http.Error(w, "Erreur récupération du compte", http.StatusInternalServerError)
-			// 	return
-			// }
-
-			var userID string
-
-			err = db.QueryRow(
-				"SELECT id FROM users WHERE email = ?",
-				email,
-			).Scan(&userID)
-
+			userID, err := login.Login(db, email, password)
 			if err != nil {
-				renderError(w, 500)
-				//http.Error(w, "Erreur récupération utilisateur", http.StatusInternalServerError)
+				renderError(w, 401)
+				//http.Error(w, "Email ou mot de passe incorrect", http.StatusUnauthorized)
 				return
 			}
 
-			http.SetCookie(w, &http.Cookie{
-				Name:     "pending_user_id",
-				Value:    userID,
-				HttpOnly: true,
-				Secure:   false,
-				SameSite: http.SameSiteStrictMode,
-				Path:     "/",
-			})
-			// http.SetCookie(w, &http.Cookie{
-			// 	Name:     "pending_2fa",
-			// 	Value:    "1",
-			// 	HttpOnly: true,
-			// 	Secure:   false,
-			// 	SameSite: http.SameSiteStrictMode,
-			// 	Path:     "/",
-			// })
-			// http.Redirect(w, r, "/2fa", http.StatusSeeOther)
+			sessionID, expiresAt, err := m.CreationSession(userID)
+			if err != nil {
+				renderError(w, 500)
+				return
+			}
+
+			cookieUser := login.CreateCookie(sessionID, expiresAt, COOKIE_NAME)
+			http.SetCookie(w, cookieUser)
+
 			http.Redirect(w, r, "/cookies", http.StatusSeeOther)
 
 		default:
@@ -196,10 +177,8 @@ func RegisterHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 func Profile(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		sessionID, err := login.GetSessionCookie(r)
-		if err != nil {
-			renderError(w, 401)
-			// http.Error(w, "Vous n'êtes pas connecté", http.StatusUnauthorized)
+		if r.Method != http.MethodGet {
+			renderError(w, 405)
 			return
 		}
 
@@ -209,121 +188,68 @@ func Profile(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 
-		//need to be optimised
-		var userID string
-
-		err = db.QueryRow(`
-			SELECT user_id
-			FROM sessions
-			WHERE id = ?
-			AND expires_at > datetime('now')
-		`, sessionID).Scan(&userID)
-
+		sessionID, err := login.GetSessionCookie(r, COOKIE_NAME)
 		if err != nil {
+			//renderError(w, 401)
+			http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
+			return
+		}
+		session, ok := m.RechercheSession(sessionID)
+		if ok == false {
+			//renderError(w, 401)
 			http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
 			return
 		}
 
 		userSQL := db.QueryRow(`
-	SELECT
-		users.id,
-		users.username,
-		users.email,
-		users.created_at,
-		roles.name
-	FROM users
-	JOIN roles ON roles.id = users.roles_id
-`)
-		if err != nil {
-			log.Println("Erreur récupération des infos de l'utilisateur")
-			http.Error(w, "Erreur récupération des infos de l'utilisateur", http.StatusInternalServerError)
-			return
-		}
+		SELECT
+			users.id,
+			users.username,
+			users.email,
+			users.created_at,
+			roles.name
+		FROM users
+		JOIN roles ON users.roles_id = roles.id
+		WHERE users.id = ?`, session.UserID)
 
 		var user models.User
+		var date string
 
 		err = userSQL.Scan(
 			&user.ID,
 			&user.Username,
 			&user.Email,
-			&user.CreatedAt,
+			&date,
 			&user.Role,
 		)
-		log.Println(user)
-
+		if err != nil {
+			log.Println("problème dans le chargement des données de l'utilisateur:", err)
+			renderError(w, 500)
+			return
+		}
+		user.CreatedAt, err = time.Parse("2006-01-02 15:04:05", date)
+		if err != nil {
+			log.Println("problème dans la conversion de la date", err)
+			renderError(w, 500)
+			return
+		}
 		w, err = executeBuffer(t, w, user)
 		if err != nil {
-			log.Println("problème dans le rendu de la page profil")
+			log.Println("problème dans le rendu de la page profil", err)
 			renderError(w, 500)
 			return
 		}
 	}
 }
 
-func AcceptCookies(db *sql.DB, m *session.Manager) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			renderError(w, 405)
-			return
-		}
-
-		cookie, err := r.Cookie("pending_user_id")
-
-		if err != nil {
-			http.Error(w, "Aucune connexion en attente", http.StatusUnauthorized)
-			return
-		}
-
-		userID := cookie.Value
-
-		sessionID, err := login.CreateSessionCookie(w)
-
-		if err != nil {
-			renderError(w, 500)
-			//http.Error(w, "Erreur création session", http.StatusInternalServerError)
-			return
-		}
-
-		_, err = db.Exec(`
-	INSERT INTO sessions (id, user_id, created_at, expires_at)
-	VALUES (?, ?, datetime('now'), datetime('now', '+1 day'))
-`, sessionID, userID)
-
-		if err != nil {
-			//http.Error(w, "Erreur session", http.StatusInternalServerError)
-			renderError(w, 500)
-			return
-		}
-
-		http.SetCookie(w, &http.Cookie{
-			Name:     "pending_user_id",
-			Value:    "",
-			Expires:  time.Now().Add(-time.Hour),
-			MaxAge:   -1,
-			HttpOnly: true,
-			Secure:   false,
-			SameSite: http.SameSiteStrictMode,
-			Path:     "/",
-		})
-
-		http.Redirect(w, r, "/profile", http.StatusSeeOther)
-	}
-}
-
+// Should we keep this handler ? it's just for information
 func Cookies(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		t, err := parseTemplates(COOKIES_PATH)
-		if err != nil {
-			renderError(w, 500)
-			return
+		http.ServeFile(w, r, COOKIES_PATH)
+		ticker := time.NewTicker(5 * time.Second)
+		if ticker.C == time.Tick(0) {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 		}
-
-		w, err = executeBuffer(t, w, nil)
-		if err != nil {
-			renderError(w, 500)
-			return
-		}
-
 	} else {
 		renderError(w, 405)
 		return
@@ -336,14 +262,15 @@ func Logout(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			renderError(w, 405)
 			return
 		}
-		sessionID, err := login.GetSessionCookie(r)
 
-		if err == nil {
-			db.Exec("DELETE FROM sessions WHERE id = ?", sessionID)
+		sessionID, err := login.GetSessionCookie(r, COOKIE_NAME)
+		if err != nil {
+			//renderError(w, 401)
+			http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
+			return
 		}
-
+		m.SuppressionSession(sessionID)
 		login.DeleteSessionCookie(w)
-
 		fmt.Fprintln(w, "Déconnexion réussie")
 	}
 }
@@ -368,20 +295,27 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		case http.MethodPost:
 
-			sessionID, err := login.GetSessionCookie(r)
+			sessionID, err := login.GetSessionCookie(r, COOKIE_NAME)
 			if err != nil {
-				http.Error(w, "Vous devez être connecté", http.StatusUnauthorized)
+				//renderError(w, 401)
+				http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
+				return
+			}
+			session, ok := m.RechercheSession(sessionID)
+			if ok == false {
+				//renderError(w, 401)
+				http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
 				return
 			}
 
-			var userID string
+			var userID string = session.UserID
 
 			err = db.QueryRow(`
-			SELECT user_id
-			FROM sessions
-			WHERE id = ?
-			AND expires_at > datetime('now')
-		`, sessionID).Scan(&userID)
+				SELECT user_id
+				FROM sessions
+				WHERE id = ?
+				AND expires_at > datetime('now')
+			`, sessionID).Scan(&userID)
 
 			if err != nil {
 				http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)

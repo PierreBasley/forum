@@ -31,34 +31,35 @@ func NewManager() *Manager {
 	}
 }
 
-func (m *Manager) CreationSession(userID string) (string, error) {
+func (m *Manager) CreationSession(userID string) (string, time.Time, error) {
 
 	if userID == "" {
-		return "", errors.New("Erreur : l'userID est vide.")
+		return "", time.Time{}, errors.New("Erreur : l'userID est vide.")
 	}
 
 	now := time.Now()
+	expiresAt := now.Add(SESSION_DURATION)
 	s := Session{
 		UserID:    userID,
 		CreatedAt: now,
-		ExpiresAt: now.Add(SESSION_DURATION),
+		ExpiresAt: expiresAt,
 	}
 
 	sessionID, err := uuid.NewV4()
 	if err != nil {
-		return "", errors.New("Erreur : la génération de l'uuid a échoué.")
+		return "", time.Time{}, errors.New("Erreur : la génération de l'uuid a échoué.")
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if _, ok := m.sessions[sessionID.String()]; ok == true {
-		return "", errors.New("identifiant de session déjà existant")
+		return "", time.Time{}, errors.New("identifiant de session déjà existant")
 	}
 
 	m.sessions[sessionID.String()] = s
 
-	return sessionID.String(), nil
+	return sessionID.String(), expiresAt, nil
 }
 
 func (m *Manager) RechercheSession(sessionID string) (Session, bool) {
