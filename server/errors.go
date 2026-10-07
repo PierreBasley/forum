@@ -10,7 +10,12 @@ const (
 	ERR_PATH = "./templates/errors/"
 )
 
-func renderError(w http.ResponseWriter, status int) {
+type ErrorDetails struct {
+	Error error
+	AllowedMethods []string
+}
+
+func renderError(w http.ResponseWriter, status int, errorStruct *ErrorDetails) {
 	errorCode := strconv.Itoa(status)
 	errorPage := ERR_PATH + errorCode + ".html"
 
@@ -22,7 +27,11 @@ func renderError(w http.ResponseWriter, status int) {
 
 	var buffer bytes.Buffer
 
-	err = t.Execute(&buffer, nil)
+	if errorStruct == nil {
+		err = t.Execute(&buffer, nil)
+	} else {
+		err = t.Execute(&buffer, *errorStruct)
+	}
 	if err != nil {
 		http.Error(w, http.StatusText(status), status)
 		return
