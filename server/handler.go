@@ -7,6 +7,7 @@ import (
 	"forum/models"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -105,6 +106,17 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+func isValidPassword(password string) bool {
+	if len(password) < 8 {
+		return false
+	}
+	hashDigit := regexp.MustCompile(`[0-9]`).MatchString(password)
+	hashUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)
+	hashSpecial := regexp.MustCompile(`[!@#~$%^&*()+|_.,<>?/{}\-]`).MatchString(password)
+
+	return hashDigit && hashUpper && hashSpecial
+}
+
 func RegisterHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -137,6 +149,15 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			if password != passwordConfirm {
 				renderError(w, 400)
 				//http.Error(w, "Les mots de passe ne correspondent pas", http.StatusBadRequest)
+				return
+			}
+
+			if !isValidPassword(password) {
+				http.Error(
+					w,
+					"Le mot de passe doit contenir au minimum 8 caractères, 1 chiffre, 1 majuscule et 1 caractère spécial",
+					http.StatusBadRequest,
+				)
 				return
 			}
 
