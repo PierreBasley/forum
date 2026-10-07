@@ -1,0 +1,30 @@
+[33mb86bd43[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32m8-mdp-complexe[m[33m, [m[1;31morigin/8-mdp-complexe[m[33m)[m mdp a 8caractère
+[33m52a58d2[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;31morigin/9-cookies_sessions[m[33m, [m[1;32mmain[m[33m)[m MERGE: branch main & 5-Creation-de-post. Resolution conflit et synergies
+[33m1d18f76[m[33m ([m[1;31morigin/6-backendfrontend-management[m[33m)[m MAJ SQL + preparation pre-merge
+[33m06758fa[m FEAT: ajout erreur 401.html, refacto (errors.go et templateExecute.go)
+[33med4af48[m[33m ([m[1;31morigin/5-creation-de-post[m[33m, [m[1;32m5-creation-de-post[m[33m)[m ajout commentaire
+[33m223fc90[m ajout fichier templateExecute.go
+[33m87afafe[m voir les posts dans create
+[33m8c2eabc[m Ajout du renvoi du code 2FA
+[33m436acf3[m Ajouts des pages erreurs.html, + modif handlers avec buffer bytes
+[33mf1c7c96[m Ajout sécurité 2FA et renvoi du code
+[33mf71c2bd[m mise en de mdp oublier
+[33m7d0d97d[m ajout du factor.go
+[33m383e046[m double auth
+[33m562f897[m mise en place du role visiteur dans l'auth
+[33m3c32908[m mise en place du role visiteur
+[33mae3ca6a[m Créations de layouts, séparation et agencements des pages HTML + handlers
+[33ma5ffbb3[m creations des postes par sqlite
+[33m10a3a6c[m Ajout du formulaire de création de post
+[33m0d6872c[m[33m ([m[1;31morigin/5-post[m[33m, [m[1;31morigin/4-authentification[m[33m, [m[1;32m5-post[m[33m)[m Fix: commit pré-merge
+[33mbd0de5d[m[33m ([m[1;31morigin/auth[m[33m)[m FIX: reorganisation code et preparation pré-merge
+[33m31c775c[m confirmation du mdp
+[33mda70e09[m modification des cookies avec buttons
+[33ma95f66f[m ajout des cookies
+[33m303d23d[m[33m ([m[1;31morigin/3-ajout-de-pages-html[m[33m)[m Merge pull request #2 from PierreBasley/1-création-de-la-base-de-données
+[33me441572[m[33m ([m[1;31morigin/1-création-de-la-base-de-données[m[33m)[m FEAT: Constitution de la base de données
+[33me48196a[m v1 de auth avec sqlite
+[33m2f34944[m Première_table ajouté
+[33me662b31[m auth
+[33me5f45c6[m Feat: Premier commit de départ
+[33m6cbc2da[m Initial commit

@@ -108,15 +108,16 @@ func CreationDB() (*sql.DB, error) {
 		)
 	`)*/
 
-	/*if err != nil {
+	/*
+		if err != nil {
 			log.Fatal(err)
 		}
 
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		_, err = db.Exec(`
+	*/
+	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS password_reset_codes (
 			id TEXT PRIMARY KEY,
 			user_id TEXT NOT NULL,
@@ -125,7 +126,7 @@ func CreationDB() (*sql.DB, error) {
 			used INTEGER NOT NULL DEFAULT 0,
 			FOREIGN KEY (user_id) REFERENCES users(id)
 		)
-	`)*/
+	`)
 
 	//Need to be removed, not the best method to insert an admin account.
 	// var exists bool

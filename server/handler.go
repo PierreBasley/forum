@@ -3,11 +3,11 @@ package server
 import (
 	"database/sql"
 	"fmt"
+
 	"forum/login"
 	"forum/models"
 	"log"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
@@ -106,17 +106,6 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func isValidPassword(password string) bool {
-	if len(password) < 8 {
-		return false
-	}
-	hashDigit := regexp.MustCompile(`[0-9]`).MatchString(password)
-	hashUpper := regexp.MustCompile(`[A-Z]`).MatchString(password)
-	hashSpecial := regexp.MustCompile(`[!@#~$%^&*()+|_.,<>?/{}\-]`).MatchString(password)
-
-	return hashDigit && hashUpper && hashSpecial
-}
-
 func RegisterHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -152,7 +141,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 				return
 			}
 
-			if !isValidPassword(password) {
+			if !login.IsValidPassword(password) {
 				http.Error(
 					w,
 					"Le mot de passe doit contenir au minimum 8 caractères, 1 chiffre, 1 majuscule et 1 caractère spécial",
@@ -680,7 +669,6 @@ func ReadPosts(db *sql.DB) http.HandlerFunc {
 // 	http.ServeFile(w, r, "templates/index.html")
 // }
 
-/*
 func TwoFactorPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
@@ -815,7 +803,18 @@ func ForgotPasswordPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.ServeFile(w, r, "templates/forgot-password.html")
+	//http.ServeFile(w, r, "templates/pages/forgot-password.html")
+	t, err := parseTemplates("templates/pages/forgot-password.html")
+	if err != nil {
+		renderError(w, 500)
+		return
+	}
+
+	w, err = executeBuffer(t, w, nil)
+	if err != nil {
+		renderError(w, 500)
+		return
+	}
 }
 
 func ForgotPasswordHandler(db *sql.DB) http.HandlerFunc {
@@ -848,7 +847,7 @@ func ResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.ServeFile(w, r, "templates/reset-password.html")
+	http.ServeFile(w, r, "templates/pages/reset-password.html")
 }
 
 func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
@@ -901,6 +900,7 @@ func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+/*
 func ResendTwoFactorHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -997,5 +997,6 @@ func ResendTwoFactorHandler(db *sql.DB) http.HandlerFunc {
 
 		http.Redirect(w, r, "/2fa", http.StatusSeeOther)
 	}
+
 }
 */
