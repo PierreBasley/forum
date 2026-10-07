@@ -847,7 +847,19 @@ func ResetPasswordPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.ServeFile(w, r, "templates/pages/reset-password.html")
+	//http.ServeFile(w, r, "templates/pages/reset-password.html")
+	t, err := parseTemplates("templates/pages/reset-password.html")
+	if err != nil {
+		renderError(w, 500)
+		return
+	}
+
+	w, err = executeBuffer(t, w, nil)
+	if err != nil {
+		renderError(w, 500)
+		return
+	}
+
 }
 
 func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
@@ -857,12 +869,11 @@ func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		email := r.FormValue("email")
 		code := r.FormValue("code")
 		password := r.FormValue("password")
 		passwordConfirm := r.FormValue("password_confirm")
 
-		if email == "" || code == "" || password == "" || passwordConfirm == "" {
+		if code == "" || password == "" || passwordConfirm == "" {
 			http.Error(w, "Tous les champs sont obligatoires", http.StatusBadRequest)
 			return
 		}
@@ -884,7 +895,7 @@ func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		userID, err := login.VerifyPasswordResetCode(db, email, code)
+		userID, err := login.VerifyPasswordResetCode(db, code)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return

@@ -64,12 +64,11 @@ func CreatePasswordResetCode(db *sql.DB, email string) error {
 	return nil
 }
 
-func VerifyPasswordResetCode(db *sql.DB, email, code string) (string, error) {
+func VerifyPasswordResetCode(db *sql.DB, code string) (string, error) {
 	var userID string
 
 	err := db.QueryRow(
 		"SELECT id FROM users WHERE email = ?",
-		email,
 	).Scan(&userID)
 
 	if err != nil {
