@@ -1,11 +1,15 @@
 package models
 
+import (
+	"time"
+)
+
 type User struct {
-	ID         string
-	Username   string
-	Email      string
-	Created_at string
-	Role       string
+	ID        string
+	Username  string
+	Email     string
+	CreatedAt time.Time
+	Role      string
 }
 
 type Post struct {
@@ -15,5 +19,5 @@ type Post struct {
 	Title      string
 	Content    string
 	Categories []string
-	CreatedAt  string
+	CreatedAt  time.Time
 }
