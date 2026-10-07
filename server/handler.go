@@ -2,6 +2,7 @@ package server
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"forum/login"
 	"forum/models"
@@ -30,19 +31,19 @@ func Index(db *sql.DB) http.HandlerFunc {
 		// PB : Done + integration of the buffer
 
 		if r.URL.Path != "/" {
-			renderError(w, 404)
+			renderError(w, 404, nil)
 			return
 		}
 
 		t, err := parseTemplates(INDEX_PATH)
 		if err != nil {
-			renderError(w, 500)
+			renderError(w, 500, nil)
 			return
 		}
 
 		w, err = executeBuffer(t, w, nil)
 		if err != nil {
-			renderError(w, 500)
+			renderError(w, 500, nil)
 			return
 		}
 	}
@@ -65,13 +66,13 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		case http.MethodGet:
 			t, err := parseTemplates(LOGIN_PATH)
 			if err != nil {
-				renderError(w, 500)
+				renderError(w, 500, nil)
 				return
 			}
 
 			w, err = executeBuffer(t, w, nil)
 			if err != nil {
-				renderError(w, 500)
+				renderError(w, 500, nil)
 				return
 			}
 
@@ -82,7 +83,7 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 
 			userID, err := login.Login(db, email, password)
 			if err != nil {
-				renderError(w, 401)
+				renderError(w, 401, nil)
 				//http.Error(w, "Email ou mot de passe incorrect", http.StatusUnauthorized)
 				return
 			}
@@ -99,7 +100,7 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 			http.Redirect(w, r, "/cookies", http.StatusSeeOther)
 
 		default:
-			renderError(w, 405)
+			renderError(w, 405, &ErrorDetails{ Error: nil, AllowedMethods: []string{"GET", "POST"}})
 			return
 		}
 	}
@@ -112,13 +113,13 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 		case http.MethodGet:
 			t, err := parseTemplates(REGISTER_PATH)
 			if err != nil {
-				renderError(w, 500)
+				renderError(w, 500, nil)
 				return
 			}
 
 			w, err = executeBuffer(t, w, nil)
 			if err != nil {
-				renderError(w, 500)
+				renderError(w, 500, nil)
 				return
 			}
 
@@ -135,14 +136,14 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			}
 
 			if password != passwordConfirm {
-				renderError(w, 400)
+				renderError(w, 400, &ErrorDetails{ Error: errors.New("Les mots de passe ne correspondent pas"), AllowedMethods: nil})
 				//http.Error(w, "Les mots de passe ne correspondent pas", http.StatusBadRequest)
 				return
 			}
 
 			err := login.CreateAccount(db, username, email, password)
 			if err != nil {
-				renderError(w, 400)
+				renderError(w, 500, nil)
 				//is this the right http error code ?
 				//http.Error(w, "Erreur création du compte", http.StatusBadRequest)
 				return
@@ -219,7 +220,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			).Scan(&userID)
 
 			if err != nil {
-				renderError(w, 500)
+				renderError(w, 500, nil)
 				//http.Error(w, "Erreur récupération utilisateur", http.StatusInternalServerError)
 				return
 			}
@@ -244,7 +245,7 @@ func RegisterHandler(db *sql.DB) http.HandlerFunc {
 			http.Redirect(w, r, "/cookies", http.StatusSeeOther)
 
 		default:
-			renderError(w, 405)
+			renderError(w, 405, &ErrorDetails{ Error: nil, AllowedMethods: []string{"GET", "POST"}})
 			return
 		}
 	}
@@ -254,14 +255,14 @@ func Profile(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionID, err := login.GetSessionCookie(r)
 		if err != nil {
-			renderError(w, 401)
+			renderError(w, 401, nil)
 			// http.Error(w, "Vous n'êtes pas connecté", http.StatusUnauthorized)
 			return
 		}
 
 		t, err := parseTemplates(PROFILE_PATH)
 		if err != nil {
-			renderError(w, 500)
+			renderError(w, 500, nil)
 			return
 		}
 
@@ -310,7 +311,7 @@ func Profile(db *sql.DB) http.HandlerFunc {
 		w, err = executeBuffer(t, w, user)
 		if err != nil {
 			log.Println("problème dans le rendu de la page profil")
-			renderError(w, 500)
+			renderError(w, 500, nil)
 			return
 		}
 	}
@@ -319,7 +320,7 @@ func Profile(db *sql.DB) http.HandlerFunc {
 func AcceptCookies(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			renderError(w, 405)
+			renderError(w, 405, &ErrorDetails{ Error: nil, AllowedMethods: []string{"POST"}})
 			return
 		}
 
@@ -335,7 +336,7 @@ func AcceptCookies(db *sql.DB) http.HandlerFunc {
 		sessionID, err := login.CreateSessionCookie(w)
 
 		if err != nil {
-			renderError(w, 500)
+			renderError(w, 500, nil)
 			//http.Error(w, "Erreur création session", http.StatusInternalServerError)
 			return
 		}
@@ -347,7 +348,7 @@ func AcceptCookies(db *sql.DB) http.HandlerFunc {
 
 		if err != nil {
 			//http.Error(w, "Erreur session", http.StatusInternalServerError)
-			renderError(w, 500)
+			renderError(w, 500, nil)
 			return
 		}
 
@@ -370,18 +371,18 @@ func Cookies(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		t, err := parseTemplates(COOKIES_PATH)
 		if err != nil {
-			renderError(w, 500)
+			renderError(w, 500, nil)
 			return
 		}
 
 		w, err = executeBuffer(t, w, nil)
 		if err != nil {
-			renderError(w, 500)
+			renderError(w, 500, nil)
 			return
 		}
 
 	} else {
-		renderError(w, 405)
+		renderError(w, 405, &ErrorDetails{ Error: nil, AllowedMethods: []string{"GET"}})
 		return
 	}
 }
@@ -389,7 +390,7 @@ func Cookies(w http.ResponseWriter, r *http.Request) {
 func Logout(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			renderError(w, 405)
+			renderError(w, 405, &ErrorDetails{ Error: nil, AllowedMethods: []string{"GET"}})
 			return
 		}
 		sessionID, err := login.GetSessionCookie(r)
@@ -412,13 +413,13 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 		case http.MethodGet:
 			t, err := parseTemplates(CREATEPOST_PATH)
 			if err != nil {
-				renderError(w, 500)
+				renderError(w, 500, nil)
 				return
 			}
 
 			w, err = executeBuffer(t, w, nil)
 			if err != nil {
-				renderError(w, 500)
+				renderError(w, 500, nil)
 				return
 			}
 
@@ -480,7 +481,7 @@ func CreatePost(db *sql.DB) http.HandlerFunc {
 			http.Redirect(w, r, "/posts", http.StatusSeeOther)
 
 		default:
-			renderError(w, 405)
+			renderError(w, 405, &ErrorDetails{ Error: nil, AllowedMethods: []string{"GET", "POST"}})
 			return
 		}
 	}
@@ -624,14 +625,14 @@ func ReadPosts(db *sql.DB) http.HandlerFunc {
 
 		t, err := parseTemplates(POSTS_PATH)
 		if err != nil {
-			renderError(w, 500)
+			renderError(w, 500, nil)
 			return
 		}
 
 		w, err = executeBuffer(t, w, posts)
 		if err != nil {
 			log.Println("ReadPosts : erreur de rendu dans l'execution du buffer")
-			renderError(w, 500)
+			renderError(w, 500, nil)
 			return
 		}
 
