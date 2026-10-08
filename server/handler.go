@@ -29,8 +29,6 @@ const (
 
 func Index(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// YF: Need to add template parsing and execution.
-		// PB : Done + integration of the buffer
 
 		if r.URL.Path != "/" {
 			renderError(w, 404)
@@ -194,7 +192,12 @@ func Profile(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
 			return
 		}
-		session, ok := m.RechercheSession(sessionID)
+
+		session, ok, err := m.RechercheSession(sessionID)
+		if err != nil {
+			renderError(w, 500)
+			return
+		}
 		if ok == false {
 			//renderError(w, 401)
 			http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
@@ -264,13 +267,19 @@ func Logout(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
 			return
 		}
-		m.SuppressionSession(sessionID)
+
+		err = m.SuppressionSession(sessionID)
+		if err != nil {
+			log.Println("Erreur lors de la suppression de la session :", err)
+			renderError(w, 500)
+			return
+		}
 		login.DeleteSessionCookie(w, COOKIE_NAME)
 		fmt.Fprintln(w, "Déconnexion réussie")
 	}
 }
 
-// CreatePost crée un post pour l'utilisateur connecté.
+// CreatePost create a post written by the user.
 func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -295,7 +304,11 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
 				return
 			}
-			userSession, ok := m.RechercheSession(sessionID)
+			userSession, ok, err := m.RechercheSession(sessionID)
+			if err != nil {
+				renderError(w, 500)
+				return
+			}
 			if ok == false {
 				log.Println("Session introuvable ou expirée")
 				http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
