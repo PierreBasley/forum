@@ -242,14 +242,9 @@ func Profile(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	}
 }
 
-// Should we keep this handler ? it's just for information
 func Cookies(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		http.ServeFile(w, r, COOKIES_PATH)
-		ticker := time.NewTicker(5 * time.Second)
-		if ticker.C == time.Tick(0) {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-		}
 	} else {
 		renderError(w, 405)
 		return
@@ -270,7 +265,7 @@ func Logout(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 		m.SuppressionSession(sessionID)
-		login.DeleteSessionCookie(w)
+		login.DeleteSessionCookie(w, COOKIE_NAME)
 		fmt.Fprintln(w, "Déconnexion réussie")
 	}
 }
@@ -278,7 +273,6 @@ func Logout(db *sql.DB, m *session.Manager) http.HandlerFunc {
 // CreatePost crée un post pour l'utilisateur connecté.
 func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		switch r.Method {
 		case http.MethodGet:
 			t, err := parseTemplates(CREATEPOST_PATH)
@@ -297,30 +291,18 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 			sessionID, err := login.GetSessionCookie(r, COOKIE_NAME)
 			if err != nil {
-				//renderError(w, 401)
+				log.Println("Session ID problème get session", err)
 				http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
 				return
 			}
-			session, ok := m.RechercheSession(sessionID)
+			userSession, ok := m.RechercheSession(sessionID)
 			if ok == false {
-				//renderError(w, 401)
+				log.Println("Session introuvable ou expirée")
 				http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
 				return
 			}
 
-			var userID string = session.UserID
-
-			err = db.QueryRow(`
-				SELECT user_id
-				FROM sessions
-				WHERE id = ?
-				AND expires_at > datetime('now')
-			`, sessionID).Scan(&userID)
-
-			if err != nil {
-				http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
-				return
-			}
+			userID := userSession.UserID
 
 			title := strings.TrimSpace(r.FormValue("title"))
 			content := strings.TrimSpace(r.FormValue("content"))
@@ -373,19 +355,25 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 
+		t, err := parseTemplates(POSTS_PATH)
+		if err != nil {
+			renderError(w, 500)
+			return
+		}
+
 		rows, err := db.Query(`
-	SELECT
-		posts.id,
-		posts.user_id,
-		users.username,
-		posts.title,
-		posts.content,
-		posts.categories,
-		posts.created_at
-	FROM posts
-	JOIN users ON users.id = posts.user_id
-	ORDER BY posts.created_at DESC
-`)
+		SELECT
+			posts.id,
+			posts.user_id,
+			users.username,
+			posts.title,
+			posts.content,
+			posts.categories,
+			posts.created_at
+		FROM posts
+		JOIN users ON users.id = posts.user_id
+		ORDER BY posts.created_at DESC
+		`)
 		if err != nil {
 			http.Error(w, "Erreur récupération des posts", http.StatusInternalServerError)
 			return
@@ -398,6 +386,7 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 			var post models.Post
 			var categoryText string
+			var date string
 
 			err := rows.Scan(
 				&post.ID,
@@ -406,37 +395,35 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				&post.Title,
 				&post.Content,
 				&categoryText,
-				&post.CreatedAt,
+				&date,
 			)
-
 			if err != nil {
 				http.Error(w, "Erreur lecture des posts", http.StatusInternalServerError)
+				return
+			}
+
+			post.CreatedAt, err = time.Parse("2006-01-02 15:04:05", date)
+			if err != nil {
+				log.Println("problème dans la conversion de la date", err)
+				renderError(w, 500)
 				return
 			}
 
 			if categoryText != "" {
 				post.Categories = strings.Split(categoryText, ",")
 			}
-
 			posts = append(posts, post)
 		}
 
 		if err := rows.Err(); err != nil {
-
 			http.Error(w, "Erreur lecture des posts", http.StatusInternalServerError)
 			log.Println(err)
 			return
 		}
 
-		t, err := parseTemplates(POSTS_PATH)
-		if err != nil {
-			renderError(w, 500)
-			return
-		}
-
 		w, err = executeBuffer(t, w, posts)
 		if err != nil {
-			log.Println("ReadPosts : erreur de rendu dans l'execution du buffer")
+			log.Println("ReadPosts : erreur de rendu dans l'execution du buffer", err)
 			renderError(w, 500)
 			return
 		}
