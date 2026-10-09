@@ -1,0 +1,5 @@
+{{define "errorDetails"}}
+    <p>{{ if .Error }} Détails: {{ .Error.Error }}
+    {{ else }} Consultez l'administration pour plus de détails
+    {{ end }}</p>
+{{ end }}

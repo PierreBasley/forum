@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"html/template"
 	"net/http"
 	"strconv"
 )
@@ -10,11 +11,16 @@ const (
 	ERR_PATH = "./templates/errors/"
 )
 
-func renderError(w http.ResponseWriter, status int) {
+type ErrorDetails struct {
+	Error          error
+	AllowedMethods []string
+}
+
+func renderError(w http.ResponseWriter, status int, errorStruct *ErrorDetails) {
 	errorCode := strconv.Itoa(status)
 	errorPage := ERR_PATH + errorCode + ".html"
 
-	t, err := parseTemplates(errorPage)
+	t, err := parseTemplatesError(errorPage)
 	if err != nil {
 		http.Error(w, http.StatusText(status), status)
 		return
@@ -22,7 +28,11 @@ func renderError(w http.ResponseWriter, status int) {
 
 	var buffer bytes.Buffer
 
-	err = t.Execute(&buffer, nil)
+	if errorStruct == nil {
+		err = t.Execute(&buffer, nil)
+	} else {
+		err = t.Execute(&buffer, *errorStruct)
+	}
 	if err != nil {
 		http.Error(w, http.StatusText(status), status)
 		return
@@ -36,4 +46,16 @@ func renderError(w http.ResponseWriter, status int) {
 	if err != nil {
 		return
 	}
+}
+
+func parseTemplatesError(filenames string) (*template.Template, error) {
+	path := "./templates/layouts/"
+	t, err := template.ParseFiles(
+		filenames,
+		path+"head.html",
+		path+"header.html",
+		path+"errorDetails.html",
+		path+"footer.html")
+
+	return t, err
 }
