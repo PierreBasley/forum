@@ -3,40 +3,25 @@ package login
 import (
 	"net/http"
 	"time"
-
-	"github.com/gofrs/uuid"
 )
 
-func CreateSessionCookie(w http.ResponseWriter) (string, error) {
-	sessionID, err := uuid.NewV4()
-	if err != nil {
-		return "", err
-	}
+func CreateCookie(sessionID string, expiresAt time.Time, cookieName string) *http.Cookie {
 
-	/* TODO Créer une fonction qui ouvre une session pour le client
-	err := session.CreateSession(sessionID)
-	if err != nil {
-		log.Print("Could not create session for client", sessionID, ":", err)
-	}*/
-
-	expiresAt := time.Now().Add(24 * time.Hour)
-
-	cookie := &http.Cookie{
-		Name:     "session_id",
-		Value:    sessionID.String(),
+	cookieUser := &http.Cookie{
+		Name:     cookieName,
+		Value:    sessionID,
 		Expires:  expiresAt,
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteStrictMode,
 		Path:     "/",
 	}
-	http.SetCookie(w, cookie)
 
-	return sessionID.String(), nil
+	return cookieUser
 }
 
-func GetSessionCookie(r *http.Request) (string, error) {
-	cookie, err := r.Cookie("session_id")
+func GetSessionCookie(r *http.Request, cookieName string) (string, error) {
+	cookie, err := r.Cookie(cookieName)
 	if err != nil {
 		return "", err
 	}
@@ -44,20 +29,10 @@ func GetSessionCookie(r *http.Request) (string, error) {
 	return cookie.Value, nil
 }
 
-func DeleteSessionCookie(w http.ResponseWriter) {
-	/* TODO Créer une fonction DestroySession pour fermer la session du client
-	 * côté serveur (libère le mémoire ou l'espace disque associé)
-	cookie, err := r.Cookie("session_id")
-	if err != nil {
-		log.Print("")
-	}
+func DeleteSessionCookie(w http.ResponseWriter, cookieName string) {
 
-	if cookie.Value != "" {
-		session.DestroySession()
-	}
-	*/
 	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
+		Name:     cookieName,
 		Value:    "",
 		Expires:  time.Now().Add(-time.Hour),
 		HttpOnly: true,

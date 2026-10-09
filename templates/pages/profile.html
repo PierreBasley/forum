@@ -7,7 +7,7 @@
     <h2>Bienvenue {{.Username}}</h2>
     <p>Todo : mettre les infos de l'utilisateurs</p>
     <p>Votre email : {{.Email}}</p>
-    <p>Profil créé le {{.Created_at}}</p>
+    <p>Profil créé le {{.CreatedAt.Format "02/01/2006 à 15:04"}}</p>
     <p>Vous êtes un {{.Role}}</p>
     <p>Todo : mettre l'historique de ses posts et commentaires</p>
     {{template "footer"}}

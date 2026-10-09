@@ -2,16 +2,17 @@ package server
 
 import (
 	"database/sql"
+	"forum/session"
 	"log"
 	"net/http"
 )
 
-func StartHTTPServer(db *sql.DB) {
+func StartHTTPServer(db *sql.DB, m *session.Manager) {
 
-	http.HandleFunc("/", Index(db))
-	http.HandleFunc("/login", LoginHandler(db))
+	http.HandleFunc("/", Index(db, m))
+	http.HandleFunc("/login", LoginHandler(db, m))
 	//http.HandleFunc("GET /login", LoginPage)
-	http.HandleFunc("GET /visitor", Visitor)
+	//http.HandleFunc("GET /visitor", Visitor)
 	//http.HandleFunc("GET /2fa", TwoFactorPage)
 	//http.HandleFunc("POST /login", LoginHandler(db))
 	//http.HandleFunc("GET /forgot-password", ForgotPasswordPage)
@@ -20,14 +21,14 @@ func StartHTTPServer(db *sql.DB) {
 	//http.HandleFunc("POST /reset-password", ResetPasswordHandler(db))
 	//http.HandleFunc("POST /2fa", TwoFactorHandler(db))
 	//http.HandleFunc("POST /2fa/resend", ResendTwoFactorHandler(db))
-	http.HandleFunc("/register", RegisterHandler(db))
-	http.HandleFunc("GET /profile", Profile(db))
-	http.HandleFunc("GET /logout", Logout(db))
+	http.HandleFunc("/register", RegisterHandler(db, m))
+	http.HandleFunc("/profile", Profile(db, m))
+	http.HandleFunc("/logout", Logout(db, m))
 	http.HandleFunc("/cookies", Cookies)
-	http.HandleFunc("/accept-cookies", AcceptCookies(db))
+	//http.HandleFunc("/accept-cookies", AcceptCookies(db, m))
 
-	http.HandleFunc("/create-post", CreatePost(db))
-	http.HandleFunc("/posts", ReadPosts(db))
+	http.HandleFunc("/create-post", CreatePost(db, m))
+	http.HandleFunc("/posts", ReadPosts(db, m))
 
 	greet()
 

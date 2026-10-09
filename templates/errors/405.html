@@ -7,8 +7,7 @@
     {{template "header"}}
 
     <h2>Erreur 405 : méthode HTTP non autorisée</h2>
-    <p>Méthodes authorisées: {{ range .AllowedMethods }}{{ . }} {{ end }}</p>
-
+    {{template "errorDetails" .}}
     {{template "footer"}}
 
 </body>
