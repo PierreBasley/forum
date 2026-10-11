@@ -86,18 +86,26 @@ func CreationDB() (*sql.DB, error) {
 		return db, err
 	}
 
-	// _, err = db.Exec(`
-	// CREATE TABLE IF NOT EXISTS sessions (
-	// 	id TEXT PRIMARY KEY,
-	// 	user_id TEXT NOT NULL,
-	// 	created_at TEXT NOT NULL,
-	// 	expires_at TEXT NOT NULL
-	// )
-	// `)
-	// if err != nil {
-	// 	log.Println("Erreur création sessions :", err)
-	// 	return db, err
-	// }
+	// Table des tentatives 2FA
+	/*_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS two_factor_attempts (
+			user_id TEXT PRIMARY KEY,
+			attempts INTEGER NOT NULL DEFAULT 0,
+			blocked INTEGER NOT NULL DEFAULT 0,
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		)
+	`)*/
+
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS password_reset_codes (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			code_hash TEXT NOT NULL,
+			expires_at DATETIME NOT NULL,
+			used INTEGER NOT NULL DEFAULT 0,
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		)
+	`)
 
 	return db, nil
 }
