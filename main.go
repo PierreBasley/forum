@@ -21,6 +21,11 @@ func main() {
 	}
 	defer db.Close()
 
+	err = server.RunMigrations(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	//creation of a manager which will handle the sessions of the website
 	m, err := session.NewManager(SESSIONS_DIR)
 	if err != nil {
@@ -38,6 +43,7 @@ func main() {
 			}
 		}
 	}()
+
 	// Initially, this was executed on a different thread (using go statement)
 	server.StartHTTPServer(db, m)
 }
