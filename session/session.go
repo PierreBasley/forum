@@ -3,6 +3,8 @@ package session
 import (
 	"encoding/json"
 	"errors"
+	"forum/login"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -141,6 +143,23 @@ func (m *Manager) RechercheSession(sessionID string) (Session, bool, error) {
 		return Session{}, false, nil
 	}
 	return s, true, nil
+}
+
+func (m *Manager) IsSessionActive(r *http.Request, cookieName string) (Session, bool, error) {
+	sessionID, err := login.GetSessionCookie(r, cookieName)
+	if err != nil {
+		return Session{}, false, nil
+	}
+
+	session, ok, err := m.RechercheSession(sessionID)
+	if err != nil {
+		return Session{}, false, err
+	}
+	if ok == false {
+		return Session{}, false, nil
+	}
+
+	return session, true, nil
 }
 
 func (m *Manager) SuppressionSession(sessionID string) error {

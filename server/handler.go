@@ -57,6 +57,14 @@ func LoginHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		switch r.Method {
 		case http.MethodGet:
+
+			//TODO : Mettre une protection si une personne souhaite se connecter alors qu'elle est déjà en session.
+			_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
+			if ok == true {
+				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous êtes déjà connecté"), AllowedMethods: nil})
+				return
+			}
+
 			t, err := parseTemplates(LOGIN_PATH)
 			if err != nil {
 				renderError(w, 500, nil)
@@ -103,7 +111,15 @@ func RegisterHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		switch r.Method {
+
 		case http.MethodGet:
+			//TODO : mettre une protection pour un utilisateur qui serait déjà en session
+			_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
+			if ok == true {
+				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous êtes déjà connecté"), AllowedMethods: nil})
+				return
+			}
+
 			t, err := parseTemplates(REGISTER_PATH)
 			if err != nil {
 				renderError(w, 500, nil)
@@ -181,20 +197,19 @@ func Profile(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 
+		_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
+		if ok == false {
+			renderError(w, 401, &ErrorDetails{Error: errors.New("Veuillez vous connecter pour accéder à votre profil"), AllowedMethods: nil})
+			return
+		}
+
 		t, err := parseTemplates(PROFILE_PATH)
 		if err != nil {
 			renderError(w, 500, nil)
 			return
 		}
 
-		sessionID, err := login.GetSessionCookie(r, COOKIE_NAME)
-		if err != nil {
-			renderError(w, 401, &ErrorDetails{Error: errors.New("Session invalide ou expirée"), AllowedMethods: nil})
-			//http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
-			return
-		}
-
-		session, ok, err := m.RechercheSession(sessionID)
+		session, ok, err := m.IsSessionActive(r, COOKIE_NAME)
 		if err != nil {
 			renderError(w, 500, nil)
 			return
@@ -265,6 +280,12 @@ func Logout(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 
+		_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
+		if ok == false {
+			renderError(w, 401, &ErrorDetails{Error: errors.New("Vous n'êtes pas connecté"), AllowedMethods: nil})
+			return
+		}
+
 		sessionID, err := login.GetSessionCookie(r, COOKIE_NAME)
 		if err != nil {
 			renderError(w, 401, &ErrorDetails{Error: errors.New("Session invalide ou expirée"), AllowedMethods: nil})
@@ -289,6 +310,12 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
+			_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
+			if ok == false {
+				renderError(w, 401, &ErrorDetails{Error: errors.New("Veuillez vous connecter pour écrire un post"), AllowedMethods: nil})
+				return
+			}
+
 			t, err := parseTemplates(CREATEPOST_PATH)
 			if err != nil {
 				renderError(w, 500, nil)
@@ -303,26 +330,18 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		case http.MethodPost:
 
-			sessionID, err := login.GetSessionCookie(r, COOKIE_NAME)
-			if err != nil {
-				log.Println("Session ID problème get session", err)
-				renderError(w, 401, &ErrorDetails{Error: errors.New("Session invalide ou expirée"), AllowedMethods: nil})
-				//http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
-				return
-			}
-			userSession, ok, err := m.RechercheSession(sessionID)
+			session, ok, err := m.IsSessionActive(r, COOKIE_NAME)
 			if err != nil {
 				renderError(w, 500, nil)
 				return
 			}
 			if ok == false {
-				log.Println("Session introuvable ou expirée")
 				renderError(w, 401, &ErrorDetails{Error: errors.New("Session invalide ou expirée"), AllowedMethods: nil})
 				//http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
 				return
 			}
 
-			userID := userSession.UserID
+			userID := session.UserID
 
 			title := strings.TrimSpace(r.FormValue("title"))
 			content := strings.TrimSpace(r.FormValue("content"))
@@ -462,12 +481,18 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	}
 }
 
-func ForgotPasswordHandler(db *sql.DB) http.HandlerFunc {
+func ForgotPasswordHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		switch r.Method {
 		case http.MethodGet:
 			//http.ServeFile(w, r, "templates/pages/forgot-password.html")
+			_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
+			if ok == true {
+				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous êtes déjà connecté"), AllowedMethods: nil})
+				return
+			}
+
 			t, err := parseTemplates(FORGOT_PASSWORD)
 			if err != nil {
 				renderError(w, 500, nil)
@@ -506,11 +531,17 @@ func ForgotPasswordHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
+func ResetPasswordHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		switch r.Method {
 		case http.MethodGet:
+			_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
+			if ok == true {
+				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous êtes déjà connecté"), AllowedMethods: nil})
+				return
+			}
+
 			//http.ServeFile(w, r, "templates/pages/reset-password.html")
 			t, err := parseTemplates(RESET_PASSWORD)
 			if err != nil {

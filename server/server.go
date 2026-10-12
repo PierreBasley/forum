@@ -13,8 +13,8 @@ func StartHTTPServer(db *sql.DB, m *session.Manager) {
 
 	http.HandleFunc("/", Index(db, m))
 	http.HandleFunc("/login", LoginHandler(db, m))
-	http.HandleFunc("/forgot-password", ForgotPasswordHandler(db))
-	http.HandleFunc("/reset-password", ResetPasswordHandler(db))
+	http.HandleFunc("/forgot-password", ForgotPasswordHandler(db, m))
+	http.HandleFunc("/reset-password", ResetPasswordHandler(db, m))
 	//http.HandleFunc("POST /2fa", TwoFactorHandler(db))
 	//http.HandleFunc("POST /2fa/resend", ResendTwoFactorHandler(db))
 	http.HandleFunc("/register", RegisterHandler(db, m))
