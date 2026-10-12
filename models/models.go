@@ -13,11 +13,15 @@ type User struct {
 }
 
 type Post struct {
-	ID         string
-	UserID     string
-	Username   string
-	Title      string
-	Content    string
-	Categories []string
-	CreatedAt  time.Time
+	ID            string
+	UserID        string
+	Username      string
+	Title         string
+	Content       string
+	Categories    []string
+	CreatedAt     time.Time
+	LikesCount    int
+	LikedByMe     bool
+	DislikesCount int
+	DislikedByMe  bool
 }

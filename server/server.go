@@ -28,6 +28,7 @@ func StartHTTPServer(db *sql.DB, m *session.Manager) {
 
 	http.HandleFunc("/create-post", CreatePost(db, m))
 	http.HandleFunc("/posts", ReadPosts(db, m))
+	http.HandleFunc("/like", LikeHandler(db, m))
 
 	greet()
 
