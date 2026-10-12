@@ -33,7 +33,7 @@
             aria-label="Aimer cette publication"
             style="border: none; background: none; cursor: pointer; font-size: 20px; color: {{if .LikedByMe}}red{{else}}gray{{end}};"
         >
-            {{if .LikedByMe}}♥{{else}}♡{{end}}
+            {{if .LikedByMe}}⬆︎{{else}}♡{{end}}
             {{.LikesCount}}
         </button>
     </form>
@@ -48,7 +48,7 @@
             aria-label="Ne pas aimer cette publication"
             style="border: none; background: none; cursor: pointer; font-size: 20px; color: {{if .DislikedByMe}}red{{else}}gray{{end}};"
         >
-            ♥︎ {{.DislikesCount}}
+            ⬇︎ {{.DislikesCount}}
         </button>
     </form>
 </div>
