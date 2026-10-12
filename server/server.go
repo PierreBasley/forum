@@ -8,14 +8,11 @@ import (
 )
 
 func StartHTTPServer(db *sql.DB, m *session.Manager) {
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	http.HandleFunc("/", Index(db, m))
 	http.HandleFunc("/login", LoginHandler(db, m))
-	//http.HandleFunc("GET /login", LoginPage)
-	//http.HandleFunc("GET /2fa", TwoFactorPage)
-	//http.HandleFunc("POST /login", LoginHandler(db))
-	//http.HandleFunc("GET /forgot-password", ForgotPasswordPage)
-	//http.HandleFunc("POST /forgot-password", ForgotPasswordHandler(db))
 	http.HandleFunc("/forgot-password", ForgotPasswordHandler(db))
 	http.HandleFunc("/reset-password", ResetPasswordHandler(db))
 	//http.HandleFunc("POST /2fa", TwoFactorHandler(db))
@@ -24,8 +21,6 @@ func StartHTTPServer(db *sql.DB, m *session.Manager) {
 	http.HandleFunc("/profile", Profile(db, m))
 	http.HandleFunc("/logout", Logout(db, m))
 	http.HandleFunc("/cookies", Cookies)
-	//http.HandleFunc("/accept-cookies", AcceptCookies(db, m))
-
 	http.HandleFunc("/create-post", CreatePost(db, m))
 	http.HandleFunc("/posts", ReadPosts(db, m))
 

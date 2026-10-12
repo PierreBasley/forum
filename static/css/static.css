@@ -1,0 +1,21 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f4f4f4;
+}
+
+h1 {
+    font-size: 100px;
+}
+
+h1 > a:link {
+ color: black;
+}
+
+h1 > a:visited {
+color: brown
+}
+
+h1 > a:hover {
+ color: yellow;
+}
+
