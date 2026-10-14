@@ -2,11 +2,11 @@
 <html lang="fr">
 {{template "head"}}
 <body>
-{{template "header"}}
+{{template "header" .Auth}}
     <div class="container">
         <h2>Publications du forum</h2>
-        {{if .}}
-            {{range .}}
+        {{if .Posts}}
+            {{range .Posts}}
             <article>
                 <h2>{{.Title}}</h2>
                 <div>

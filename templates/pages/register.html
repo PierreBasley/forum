@@ -2,7 +2,7 @@
 <html lang="en">
 {{template "head"}}
 <body>
-{{template "header"}}
+{{template "header" .Auth}}
     <h2>Créer un compte</h2>
     <form action="/register" method="POST">
             <label for="register-name">Nom :</label>

@@ -29,6 +29,11 @@ type Manager struct {
 	dir string
 }
 
+type Authentified struct {
+	IsActive bool
+	Session  Session
+}
+
 // NewManager create a manager ready to manage session and files operation.
 func NewManager(sessionDir string) (*Manager, error) {
 	if sessionDir == "" {

@@ -2,7 +2,7 @@
 <html lang="fr">
 {{template "head"}}
 <body>
-{{template "header"}}
+{{template "header" .Auth}}
     <h2>Connexion</h2>
     <form action="/login" method="POST">
             <label for="login-email">Email :</label>

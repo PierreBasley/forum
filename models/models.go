@@ -1,6 +1,7 @@
 package models
 
 import (
+	"forum/session"
 	"time"
 )
 
@@ -20,4 +21,10 @@ type Post struct {
 	Content    string
 	Categories []string
 	CreatedAt  time.Time
+}
+
+type PageData struct {
+	Auth    session.Authentified
+	Posts   []Post
+	Profile User
 }

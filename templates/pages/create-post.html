@@ -2,7 +2,7 @@
 <html lang="fr">
 {{template "head"}}
 <body>
-{{template "header"}}
+{{template "header" .Auth}}
     <h2>Créer un nouveau post</h2>
     <form action="/create-post" method="POST">
         <label for="title">Titre :</label><br>

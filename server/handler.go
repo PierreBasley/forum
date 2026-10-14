@@ -38,13 +38,25 @@ func Index(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 
+		var userData session.Authentified
+
+		_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+		if err != nil {
+			renderError(w, 500, nil)
+			return
+		}
+		if ok == true {
+			userData.IsActive = true
+		}
+
 		t, err := parseTemplates(INDEX_PATH)
 		if err != nil {
 			renderError(w, 500, nil)
 			return
 		}
 
-		w, err = executeBuffer(t, w, nil)
+		pageData := models.PageData{Auth: userData}
+		w, err = executeBuffer(t, w, pageData)
 		if err != nil {
 			renderError(w, 500, nil)
 			return
@@ -58,12 +70,19 @@ func LoginHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 		switch r.Method {
 		case http.MethodGet:
 
-			//TODO : Mettre une protection si une personne souhaite se connecter alors qu'elle est déjà en session.
-			_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
+			var userData session.Authentified
+
+			_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+			if err != nil {
+				renderError(w, 500, nil)
+				return
+			}
 			if ok == true {
 				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous êtes déjà connecté"), AllowedMethods: nil})
 				return
 			}
+
+			pageData := models.PageData{Auth: userData}
 
 			t, err := parseTemplates(LOGIN_PATH)
 			if err != nil {
@@ -71,7 +90,7 @@ func LoginHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				return
 			}
 
-			w, err = executeBuffer(t, w, nil)
+			w, err = executeBuffer(t, w, pageData)
 			if err != nil {
 				renderError(w, 500, nil)
 				return
@@ -79,13 +98,22 @@ func LoginHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		case http.MethodPost:
 
+			_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+			if err != nil {
+				renderError(w, 500, nil)
+				return
+			}
+			if ok == true {
+				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous êtes déjà connecté"), AllowedMethods: nil})
+				return
+			}
+
 			email := r.FormValue("email")
 			password := r.FormValue("password")
 
 			userID, err := login.Login(db, email, password)
 			if err != nil {
 				renderError(w, 401, &ErrorDetails{Error: errors.New("Email ou mot de passe incorrect"), AllowedMethods: nil})
-				//http.Error(w, "Email ou mot de passe incorrect", http.StatusUnauthorized)
 				return
 			}
 
@@ -111,14 +139,21 @@ func RegisterHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		switch r.Method {
-
 		case http.MethodGet:
-			//TODO : mettre une protection pour un utilisateur qui serait déjà en session
-			_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
+
+			var userData session.Authentified
+
+			_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+			if err != nil {
+				renderError(w, 500, nil)
+				return
+			}
 			if ok == true {
 				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous êtes déjà connecté"), AllowedMethods: nil})
 				return
 			}
+
+			pageData := models.PageData{Auth: userData}
 
 			t, err := parseTemplates(REGISTER_PATH)
 			if err != nil {
@@ -126,13 +161,23 @@ func RegisterHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				return
 			}
 
-			w, err = executeBuffer(t, w, nil)
+			w, err = executeBuffer(t, w, pageData)
 			if err != nil {
 				renderError(w, 500, nil)
 				return
 			}
 
 		case http.MethodPost:
+
+			_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+			if err != nil {
+				renderError(w, 500, nil)
+				return
+			}
+			if ok == true {
+				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous êtes déjà connecté"), AllowedMethods: nil})
+				return
+			}
 
 			username := r.FormValue("username")
 			email := r.FormValue("email")
@@ -141,34 +186,28 @@ func RegisterHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 			if username == "" || email == "" || password == "" {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Tous les champs sont obligatoires"), AllowedMethods: nil})
-				//http.Error(w, "Tous les champs sont obligatoires", http.StatusBadRequest)
 				return
 			}
 
 			if password != passwordConfirm {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Les mots de passe ne correspondent pas"), AllowedMethods: nil})
-				//http.Error(w, "Les mots de passe ne correspondent pas", http.StatusBadRequest)
 				return
 			}
 
 			if login.IsValidPassword(password) == false {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Le mot de passe doit contenir au minimum 8 caractères, 1 chiffre, 1 majuscule et 1 caractère spécial"), AllowedMethods: nil})
-				//http.Error(w, "Le mot de passe doit contenir au minimum 8 caractères, 1 chiffre, 1 majuscule et 1 caractère spécial", http.StatusBadRequest)
 				return
 			}
 
-			err := login.CreateAccount(db, username, email, password)
+			err = login.CreateAccount(db, username, email, password)
 			if err != nil {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Erreur création du compte"), AllowedMethods: nil})
-				//TODO : it shouldn't be an error 500 ?
-				//http.Error(w, "Erreur création du compte", http.StatusBadRequest)
 				return
 			}
 
 			userID, err := login.Login(db, email, password)
 			if err != nil {
 				renderError(w, 401, &ErrorDetails{Error: errors.New("Email ou mot de passe incorrect"), AllowedMethods: nil})
-				//http.Error(w, "Email ou mot de passe incorrect", http.StatusUnauthorized)
 				return
 			}
 
@@ -197,26 +236,19 @@ func Profile(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 
-		_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
-		if ok == false {
-			renderError(w, 401, &ErrorDetails{Error: errors.New("Veuillez vous connecter pour accéder à votre profil"), AllowedMethods: nil})
-			return
-		}
-
-		t, err := parseTemplates(PROFILE_PATH)
-		if err != nil {
-			renderError(w, 500, nil)
-			return
-		}
-
-		session, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+		userSession, ok, err := m.IsSessionActive(r, COOKIE_NAME)
 		if err != nil {
 			renderError(w, 500, nil)
 			return
 		}
 		if ok == false {
 			renderError(w, 401, &ErrorDetails{Error: errors.New("Session invalide ou expirée"), AllowedMethods: nil})
-			//http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
+			return
+		}
+
+		t, err := parseTemplates(PROFILE_PATH)
+		if err != nil {
+			renderError(w, 500, nil)
 			return
 		}
 
@@ -229,7 +261,7 @@ func Profile(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			roles.name
 		FROM users
 		JOIN roles ON users.roles_id = roles.id
-		WHERE users.id = ?`, session.UserID)
+		WHERE users.id = ?`, userSession.UserID)
 
 		var user models.User
 		var date string
@@ -242,22 +274,21 @@ func Profile(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			&user.Role,
 		)
 		if err != nil {
-			//Todo : maybe remove the log later
-			log.Println("problème dans le chargement des données de l'utilisateur:", err)
 			renderError(w, 500, nil)
 			return
 		}
-		user.CreatedAt, err = time.Parse(time.DateTime, date)
+
+		userSession.CreatedAt, err = time.Parse(time.DateTime, date)
 		if err != nil {
-			//Todo : maybe remove the log later
-			log.Println("problème dans la conversion de la date", err)
 			renderError(w, 500, nil)
 			return
 		}
-		w, err = executeBuffer(t, w, user)
+
+		userData := session.Authentified{IsActive: true}
+		PageData := models.PageData{Auth: userData, Profile: user}
+
+		w, err = executeBuffer(t, w, PageData)
 		if err != nil {
-			//Todo : maybe remove the log later
-			log.Println("problème dans le rendu de la page profil", err)
 			renderError(w, 500, nil)
 			return
 		}
@@ -280,23 +311,14 @@ func Logout(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 
-		_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
-		if ok == false {
-			renderError(w, 401, &ErrorDetails{Error: errors.New("Vous n'êtes pas connecté"), AllowedMethods: nil})
-			return
-		}
-
 		sessionID, err := login.GetSessionCookie(r, COOKIE_NAME)
 		if err != nil {
 			renderError(w, 401, &ErrorDetails{Error: errors.New("Session invalide ou expirée"), AllowedMethods: nil})
-			//http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
 			return
 		}
 
 		err = m.SuppressionSession(sessionID)
 		if err != nil {
-			//Todo : maybe remove the log later
-			log.Println("Erreur lors de la suppression de la session :", err)
 			renderError(w, 500, nil)
 			return
 		}
@@ -310,11 +332,20 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
-			if ok == false {
-				renderError(w, 401, &ErrorDetails{Error: errors.New("Veuillez vous connecter pour écrire un post"), AllowedMethods: nil})
+
+			_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+			if err != nil {
+				log.Println(err)
+				renderError(w, 500, nil)
 				return
 			}
+			if ok == false {
+				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous devez être connecté pour écrire un post"), AllowedMethods: nil})
+				return
+			}
+
+			userData := session.Authentified{IsActive: true}
+			pageData := models.PageData{Auth: userData}
 
 			t, err := parseTemplates(CREATEPOST_PATH)
 			if err != nil {
@@ -322,7 +353,7 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				return
 			}
 
-			w, err = executeBuffer(t, w, nil)
+			w, err = executeBuffer(t, w, pageData)
 			if err != nil {
 				renderError(w, 500, nil)
 				return
@@ -330,18 +361,17 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		case http.MethodPost:
 
-			session, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+			userSession, ok, err := m.IsSessionActive(r, COOKIE_NAME)
 			if err != nil {
 				renderError(w, 500, nil)
 				return
 			}
 			if ok == false {
 				renderError(w, 401, &ErrorDetails{Error: errors.New("Session invalide ou expirée"), AllowedMethods: nil})
-				//http.Error(w, "Session invalide ou expirée", http.StatusUnauthorized)
 				return
 			}
 
-			userID := session.UserID
+			userID := userSession.UserID
 
 			title := strings.TrimSpace(r.FormValue("title"))
 			content := strings.TrimSpace(r.FormValue("content"))
@@ -349,13 +379,11 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 			if title == "" {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Le titre est obligatoire"), AllowedMethods: nil})
-				//http.Error(w, "Le titre est obligatoire", http.StatusBadRequest)
 				return
 			}
 
 			if content == "" {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Le contenu est obligatoire"), AllowedMethods: nil})
-				//http.Error(w, "Le contenu est obligatoire", http.StatusBadRequest)
 				return
 			}
 
@@ -364,7 +392,6 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			postID, err := uuid.NewV4()
 			if err != nil {
 				renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur création du post"), AllowedMethods: nil})
-				//http.Error(w, "Erreur création du post", http.StatusInternalServerError)
 				return
 			}
 
@@ -374,13 +401,9 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 		`, postID.String(), userID, title, content, categoryText)
 
 			if err != nil {
-				//Todo : maybe remove the log later
-				log.Println("ERREUR SQL READ POSTS :", err)
 				renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur récupération des posts"), AllowedMethods: nil})
-				//http.Error(w, "Erreur récupération des posts", http.StatusInternalServerError)
 				return
 			}
-
 			http.Redirect(w, r, "/posts", http.StatusSeeOther)
 
 		default:
@@ -396,7 +419,6 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		if r.Method != http.MethodGet {
 			renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"GET"}})
-			//http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 			return
 		}
 
@@ -421,7 +443,6 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 		`)
 		if err != nil {
 			renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur récupération des posts"), AllowedMethods: nil})
-			//http.Error(w, "Erreur récupération des posts", http.StatusInternalServerError)
 			return
 		}
 		defer rows.Close()
@@ -445,14 +466,11 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			)
 			if err != nil {
 				renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur lecture des posts"), AllowedMethods: nil})
-				//http.Error(w, "Erreur lecture des posts", http.StatusInternalServerError)
 				return
 			}
 
 			post.CreatedAt, err = time.Parse(time.DateTime, date)
 			if err != nil {
-				//Todo : maybe remove the log later
-				log.Println("problème dans la conversion de la date", err)
 				renderError(w, 500, nil)
 				return
 			}
@@ -465,16 +483,23 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		if err := rows.Err(); err != nil {
 			renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur lecture des posts"), AllowedMethods: nil})
-			//http.Error(w, "Erreur lecture des posts", http.StatusInternalServerError)
-			//Todo : maybe remove the log later
-			log.Println(err)
 			return
 		}
 
-		w, err = executeBuffer(t, w, posts)
+		var userData session.Authentified
+
+		_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
 		if err != nil {
-			//TODO : maybe remove the log later
-			log.Println("ReadPosts : erreur de rendu dans l'execution du buffer", err)
+			renderError(w, 500, nil)
+			return
+		}
+		if ok == true {
+			userData.IsActive = true
+		}
+		pageData := models.PageData{Auth: userData, Posts: posts}
+
+		w, err = executeBuffer(t, w, pageData)
+		if err != nil {
 			renderError(w, 500, nil)
 			return
 		}
@@ -486,12 +511,20 @@ func ForgotPasswordHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		switch r.Method {
 		case http.MethodGet:
-			//http.ServeFile(w, r, "templates/pages/forgot-password.html")
-			_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
+
+			var userData session.Authentified
+
+			_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+			if err != nil {
+				renderError(w, 500, nil)
+				return
+			}
 			if ok == true {
 				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous êtes déjà connecté"), AllowedMethods: nil})
 				return
 			}
+
+			pageData := models.PageData{Auth: userData}
 
 			t, err := parseTemplates(FORGOT_PASSWORD)
 			if err != nil {
@@ -499,25 +532,33 @@ func ForgotPasswordHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				return
 			}
 
-			w, err = executeBuffer(t, w, nil)
+			w, err = executeBuffer(t, w, pageData)
 			if err != nil {
 				renderError(w, 500, nil)
 				return
 			}
 		case http.MethodPost:
+
+			_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+			if err != nil {
+				renderError(w, 500, nil)
+				return
+			}
+			if ok == true {
+				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous êtes déjà connecté"), AllowedMethods: nil})
+				return
+			}
+
 			email := r.FormValue("email")
 
 			if email == "" {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Email obligatoire"), AllowedMethods: nil})
-				//http.Error(w, "Email obligatoire", http.StatusBadRequest)
 				return
 			}
 
-			err := login.CreatePasswordResetCode(db, email)
+			err = login.CreatePasswordResetCode(db, email)
 			if err != nil {
-				log.Println(err)
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Erreur dans l'envoi du code de reinitialisation du mot de passe"), AllowedMethods: nil})
-				//http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
@@ -525,7 +566,6 @@ func ForgotPasswordHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		default:
 			renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"GET", "POST"}})
-			//http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 			return
 		}
 	}
@@ -536,66 +576,80 @@ func ResetPasswordHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		switch r.Method {
 		case http.MethodGet:
-			_, ok, _ := m.IsSessionActive(r, COOKIE_NAME)
+
+			var userData session.Authentified
+
+			_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+			if err != nil {
+				renderError(w, 500, nil)
+				return
+			}
 			if ok == true {
-				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous êtes déjà connecté"), AllowedMethods: nil})
+				renderError(w, 401, &ErrorDetails{Error: errors.New("Veuillez vous déconnecter pour réinitialiser votre mot de passe"), AllowedMethods: nil})
 				return
 			}
 
-			//http.ServeFile(w, r, "templates/pages/reset-password.html")
+			pageData := models.PageData{Auth: userData}
+
 			t, err := parseTemplates(RESET_PASSWORD)
 			if err != nil {
 				renderError(w, 500, nil)
 				return
 			}
 
-			w, err = executeBuffer(t, w, nil)
+			w, err = executeBuffer(t, w, pageData)
 			if err != nil {
 				renderError(w, 500, nil)
 				return
 			}
+
 		case http.MethodPost:
+
+			_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+			if err != nil {
+				renderError(w, 500, nil)
+				return
+			}
+			if ok == true {
+				renderError(w, 401, &ErrorDetails{Error: errors.New("Vous êtes déjà connecté"), AllowedMethods: nil})
+				return
+			}
+
 			code := r.FormValue("code")
 			password := r.FormValue("password")
 			passwordConfirm := r.FormValue("password_confirm")
 
 			if code == "" || password == "" || passwordConfirm == "" {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Tous les champs sont obligatoires"), AllowedMethods: nil})
-				//http.Error(w, "Tous les champs sont obligatoires", http.StatusBadRequest)
 				return
 			}
 
 			if len(code) != 6 {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Le code doit contenir 6 chiffres"), AllowedMethods: nil})
-				//http.Error(w, "Le code doit contenir 6 chiffres", http.StatusBadRequest)
 				return
 			}
 
 			for _, char := range code {
 				if char < '0' || char > '9' {
 					renderError(w, 400, &ErrorDetails{Error: errors.New("Le code doit contenir uniquement des chiffres"), AllowedMethods: nil})
-					//http.Error(w, "Le code doit contenir uniquement des chiffres", http.StatusBadRequest)
 					return
 				}
 			}
 
 			if password != passwordConfirm {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Les mots de passe ne correspondent pas"), AllowedMethods: nil})
-				//http.Error(w, "Les mots de passe ne correspondent pas", http.StatusBadRequest)
 				return
 			}
 
 			userID, err := login.VerifyPasswordResetCode(db, code)
 			if err != nil {
 				renderError(w, 401, &ErrorDetails{Error: errors.New("Code incorrect ou expiré"), AllowedMethods: nil})
-				//http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
 			}
 
 			err = login.ResetPassword(db, userID, password)
 			if err != nil {
 				renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur modification du mot de passe"), AllowedMethods: nil})
-				//http.Error(w, "Erreur modification du mot de passe", http.StatusInternalServerError)
 				return
 			}
 
@@ -603,373 +657,7 @@ func ResetPasswordHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		default:
 			renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"GET", "POST"}})
-			//http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
 			return
 		}
 	}
 }
-
-// TODO : check that function
-// func TwoFactorPage(w http.ResponseWriter, r *http.Request) {
-// 	if r.Method != http.MethodGet {
-// 		renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"GET"}})
-// 		//http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-// 		return
-// 	}
-
-// 	_, err := r.Cookie("pending_2fa")
-// 	if err != nil {
-// 		http.Redirect(w, r, "/login", http.StatusSeeOther)
-// 		return
-// 	}
-
-// 	_, err = r.Cookie("pending_user_id")
-// 	if err != nil {
-// 		http.Redirect(w, r, "/login", http.StatusSeeOther)
-// 		return
-// 	}
-
-// 	http.ServeFile(w, r, "templates/2fa.html")
-// }
-
-// TODO : check that function
-// func TwoFactorHandler(db *sql.DB) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		if r.Method != http.MethodPost {
-// 			renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"POST"}})
-// 			//http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-// 			return
-// 		}
-
-// 		cookie, err := r.Cookie("pending_user_id")
-// 		if err != nil {
-// 			renderError(w, 401, &ErrorDetails{Error: errors.New("Aucune authentification en attente"), AllowedMethods: nil})
-// 			//http.Error(w, "Aucune authentification en attente", http.StatusUnauthorized)
-// 			return
-// 		}
-
-// 		userID := cookie.Value
-// 		code := r.FormValue("code")
-
-// 		blocked, err := login.IsTwoFactorBlocked(db, userID)
-// 		if err != nil {
-// 			renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur vérification du compte"), AllowedMethods: nil})
-// 			//http.Error(w, "Erreur vérification du compte", http.StatusInternalServerError)
-// 			return
-// 		}
-
-// 		if blocked {
-// 			renderError(w, 403, &ErrorDetails{Error: errors.New("Compte bloqué après 5 tentatives 2FA"), AllowedMethods: nil})
-// 			//http.Error(w, "Compte bloqué après 5 tentatives 2FA", http.StatusForbidden)
-// 			return
-// 		}
-
-// 		if len(code) != 6 {
-// 			renderError(w, 400, &ErrorDetails{Error: errors.New("Le code doit contenir 6 chiffres"), AllowedMethods: nil})
-// 			//http.Error(w, "Le code doit contenir 6 chiffres", http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		for _, char := range code {
-// 			if char < '0' || char > '9' {
-// 				renderError(w, 400, &ErrorDetails{Error: errors.New("Le code doit contenir uniquement des chiffres"), AllowedMethods: nil})
-// 				//http.Error(w, "Le code doit contenir uniquement des chiffres", http.StatusBadRequest)
-// 				return
-// 			}
-// 		}
-
-// 		codeHash := login.HashTwoFactorCode(code)
-
-// 		var codeID string
-
-// 		err = db.QueryRow(`
-// 			SELECT id
-// 			FROM two_factor_codes
-// 			WHERE user_id = ?
-// 			AND code_hash = ?
-// 			AND expires_at > datetime('now')
-// 			AND used = 0
-// 			ORDER BY expires_at DESC
-// 			LIMIT 1
-// 		`, userID, codeHash).Scan(&codeID)
-
-// 		if err != nil {
-// 			attempts, attemptErr := login.AddTwoFactorAttempt(db, userID)
-
-// 			if attemptErr != nil {
-// 				renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur gestion des tentatives"), AllowedMethods: nil})
-// 				//http.Error(w, "Erreur gestion des tentatives", http.StatusInternalServerError)
-// 				return
-// 			}
-
-// 			if attempts >= 5 {
-// 				renderError(w, 403, &ErrorDetails{Error: errors.New("Compte bloqué après 5 tentatives 2FA"), AllowedMethods: nil})
-// 				//http.Error(w, "Compte bloqué après 5 tentatives 2FA", http.StatusForbidden)
-// 				return
-// 			}
-// 			renderError(w, 401, &ErrorDetails{Error: errors.New("Code incorrect ou expiré. Tentative" + strconv.Itoa(attempts) + "/5"), AllowedMethods: nil})
-// 			//http.Error(w,fmt.Sprintf("Code incorrect ou expiré. Tentative %d/5.", attempts),http.StatusUnauthorized)
-// 			return
-// 		}
-
-// 		_, err = db.Exec(`
-// 			UPDATE two_factor_codes
-// 			SET used = 1
-// 			WHERE id = ?
-// 			AND used = 0
-// 		`, codeID)
-
-// 		if err != nil {
-// 			renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur validation du code"), AllowedMethods: nil})
-// 			//http.Error(w, "Erreur validation du code", http.StatusInternalServerError)
-// 			return
-// 		}
-
-// 		err = login.ResetTwoFactorAttempts(db, userID)
-// 		if err != nil {
-// 			renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur réinitialisation des tentatives"), AllowedMethods: nil})
-// 			//http.Error(w, "Erreur réinitialisation des tentatives", http.StatusInternalServerError)
-// 			return
-// 		}
-
-// 		//TODO ; why setting a cookie ?
-// 		http.SetCookie(w, &http.Cookie{
-// 			Name:     "pending_2fa",
-// 			Value:    "",
-// 			Expires:  time.Unix(0, 0),
-// 			HttpOnly: true,
-// 			Secure:   false,
-// 			SameSite: http.SameSiteStrictMode,
-// 			Path:     "/",
-// 		})
-
-// 		http.Redirect(w, r, "/cookies", http.StatusSeeOther)
-// 	}
-// }
-
-// func ForgotPasswordPage(w http.ResponseWriter, r *http.Request) {
-// 	if r.Method != http.MethodGet {
-// 		renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"GET"}})
-// 		//http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-// 		return
-// 	}
-// 	//TODO : putting the URL into a constant
-// 	//http.ServeFile(w, r, "templates/pages/forgot-password.html")
-// 	t, err := parseTemplates(FORGOT_PASSWORD)
-// 	if err != nil {
-// 		renderError(w, 500, nil)
-// 		return
-// 	}
-
-// 	w, err = executeBuffer(t, w, nil)
-// 	if err != nil {
-// 		renderError(w, 500, nil)
-// 		return
-// 	}
-// }
-
-// func ForgotPasswordHandler(db *sql.DB) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		if r.Method != http.MethodPost {
-// 			renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"POST"}})
-// 			//http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-// 			return
-// 		}
-
-// 		email := r.FormValue("email")
-
-// 		if email == "" {
-// 			renderError(w, 400, &ErrorDetails{Error: errors.New("Email obligatoire"), AllowedMethods: nil})
-// 			//http.Error(w, "Email obligatoire", http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		err := login.CreatePasswordResetCode(db, email)
-// 		if err != nil {
-// 			renderError(w, 400, &ErrorDetails{Error: errors.New("Erreur dans l'envoi du code de reinitialisation du mot de passe"), AllowedMethods: nil})
-// 			//http.Error(w, err.Error(), http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		http.Redirect(w, r, "/reset-password", http.StatusSeeOther)
-// 	}
-// }
-
-// func ResetPasswordPage(w http.ResponseWriter, r *http.Request) {
-// 	if r.Method != http.MethodGet {
-// 		renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"GET"}})
-// 		//http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-// 		return
-// 	}
-
-// 	//http.ServeFile(w, r, "templates/pages/reset-password.html")
-// 	t, err := parseTemplates("templates/pages/reset-password.html")
-// 	if err != nil {
-// 		renderError(w, 500, nil)
-// 		return
-// 	}
-
-// 	w, err = executeBuffer(t, w, nil)
-// 	if err != nil {
-// 		renderError(w, 500, nil)
-// 		return
-// 	}
-
-// }
-
-// func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		if r.Method != http.MethodPost {
-// 			renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"POST"}})
-// 			//http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-// 			return
-// 		}
-
-// 		code := r.FormValue("code")
-// 		password := r.FormValue("password")
-// 		passwordConfirm := r.FormValue("password_confirm")
-
-// 		if code == "" || password == "" || passwordConfirm == "" {
-// 			renderError(w, 400, &ErrorDetails{Error: errors.New("Tous les champs sont obligatoires"), AllowedMethods: nil})
-// 			//http.Error(w, "Tous les champs sont obligatoires", http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		if len(code) != 6 {
-// 			renderError(w, 400, &ErrorDetails{Error: errors.New("Le code doit contenir 6 chiffres"), AllowedMethods: nil})
-// 			//http.Error(w, "Le code doit contenir 6 chiffres", http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		for _, char := range code {
-// 			if char < '0' || char > '9' {
-// 				renderError(w, 400, &ErrorDetails{Error: errors.New("Le code doit contenir uniquement des chiffres"), AllowedMethods: nil})
-// 				//http.Error(w, "Le code doit contenir uniquement des chiffres", http.StatusBadRequest)
-// 				return
-// 			}
-// 		}
-
-// 		if password != passwordConfirm {
-// 			renderError(w, 400, &ErrorDetails{Error: errors.New("Les mots de passe ne correspondent pas"), AllowedMethods: nil})
-// 			//http.Error(w, "Les mots de passe ne correspondent pas", http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		userID, err := login.VerifyPasswordResetCode(db, code)
-// 		if err != nil {
-// 			renderError(w, 401, &ErrorDetails{Error: errors.New("Code incorrect ou expiré"), AllowedMethods: nil})
-// 			//http.Error(w, err.Error(), http.StatusUnauthorized)
-// 			return
-// 		}
-
-// 		err = login.ResetPassword(db, userID, password)
-// 		if err != nil {
-// 			renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur modification du mot de passe"), AllowedMethods: nil})
-// 			http.Error(w, "Erreur modification du mot de passe", http.StatusInternalServerError)
-// 			return
-// 		}
-
-// 		http.Redirect(w, r, "/login", http.StatusSeeOther)
-// 	}
-// }
-
-/*
-func ResendTwoFactorHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
-			return
-		}
-
-		cookie, err := r.Cookie("pending_user_id")
-		if err != nil {
-			http.Error(w, "Aucune authentification en attente", http.StatusUnauthorized)
-			return
-		}
-
-		userID := cookie.Value
-
-		blocked, err := login.IsTwoFactorBlocked(db, userID)
-		if err != nil {
-			http.Error(w, "Erreur vérification du compte", http.StatusInternalServerError)
-			return
-		}
-
-		if blocked {
-			http.Error(w, "Compte bloqué après 5 tentatives 2FA", http.StatusForbidden)
-			return
-		}
-
-		var email string
-
-		err = db.QueryRow(`
-			SELECT email
-			FROM users
-			WHERE id = ?
-		`, userID).Scan(&email)
-
-		if err != nil {
-			http.Error(w, "Utilisateur introuvable", http.StatusNotFound)
-			return
-		}
-
-		code, err := login.GenerateTwoFactorCode()
-		if err != nil {
-			http.Error(w, "Erreur génération du code", http.StatusInternalServerError)
-			return
-		}
-
-		codeHash := login.HashTwoFactorCode(code)
-
-		codeID, err := uuid.NewV4()
-		if err != nil {
-			http.Error(w, "Erreur génération du code", http.StatusInternalServerError)
-			return
-		}
-
-		_, err = db.Exec(`
-			DELETE FROM two_factor_codes
-			WHERE user_id = ?
-		`, userID)
-
-		if err != nil {
-			http.Error(w, "Erreur préparation du nouveau code", http.StatusInternalServerError)
-			return
-		}
-
-		_, err = db.Exec(`
-			INSERT INTO two_factor_codes (
-				id,
-				user_id,
-				code_hash,
-				expires_at,
-				used
-			)
-			VALUES (?, ?, ?, datetime('now', '+5 minutes'), 0)
-		`, codeID.String(), userID, codeHash)
-
-		if err != nil {
-			http.Error(w, "Erreur enregistrement du nouveau code", http.StatusInternalServerError)
-			return
-		}
-
-		err = login.SendTwoFactorEmail(email, code)
-		if err != nil {
-			_, _ = db.Exec(
-				`DELETE FROM two_factor_codes WHERE id = ?`,
-				codeID.String(),
-			)
-
-			http.Error(
-				w,
-				"Impossible d'envoyer le nouveau code par email",
-				http.StatusInternalServerError,
-			)
-			return
-		}
-
-		http.Redirect(w, r, "/2fa", http.StatusSeeOther)
-	}
-
-}
-*/
