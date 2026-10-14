@@ -335,8 +335,7 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			}
 
 			if content == "" {
-				renderError(w, 400, &ErrorDetails{Error: errors.New("Le contenu est obligatoire"), AllowedMethods: nil})
-				//http.Error(w, "Le contenu est obligatoire", http.StatusBadRequest)
+				renderError(w, 400, nil)
 				return
 			}
 
@@ -344,8 +343,7 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 			postID, err := uuid.NewV4()
 			if err != nil {
-				renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur création du post"), AllowedMethods: nil})
-				//http.Error(w, "Erreur création du post", http.StatusInternalServerError)
+				renderError(w, 500, nil)
 				return
 			}
 
@@ -357,8 +355,7 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			if err != nil {
 				//Todo : maybe remove the log later
 				log.Println("ERREUR SQL READ POSTS :", err)
-				renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur récupération des posts"), AllowedMethods: nil})
-				//http.Error(w, "Erreur récupération des posts", http.StatusInternalServerError)
+				renderError(w, 500, nil)
 				return
 			}
 
@@ -374,7 +371,6 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 // ReadPosts affiche les publications du forum.
 func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		if r.Method != http.MethodGet {
 			renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"GET"}})
 			//http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
@@ -387,74 +383,122 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 
-		rows, err := db.Query(`
-		SELECT
-			posts.id,
-			posts.user_id,
-			users.username,
-			posts.title,
-			posts.content,
-			posts.categories,
-			posts.created_at
-		FROM posts
-		JOIN users ON users.id = posts.user_id
-		ORDER BY posts.created_at DESC
-		`)
-		if err != nil {
-			renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur récupération des posts"), AllowedMethods: nil})
-			//http.Error(w, "Erreur récupération des posts", http.StatusInternalServerError)
-			return
-		}
-		defer rows.Close()
-
-		posts := make([]models.Post, 0)
-
-		for rows.Next() {
-
-			var post models.Post
-			var categoryText string
-			var date string
-
-			err := rows.Scan(
-				&post.ID,
-				&post.UserID,
-				&post.Username,
-				&post.Title,
-				&post.Content,
-				&categoryText,
-				&date,
-			)
+		var posts models.PostsData
+		if r.URL.Query().Get("post_id") != "" {
+			// Fetching post
+			rows, err := db.Query(`
+			SELECT
+				posts.post_id,
+				posts.user_id,
+				users.username,
+				title,
+				content,
+				categories,
+				posts.created_at
+			FROM posts
+			JOIN users ON users.id = posts.user_id
+			ORDER BY posts.created_at DESC
+			`)
 			if err != nil {
-				renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur lecture des posts"), AllowedMethods: nil})
-				//http.Error(w, "Erreur lecture des posts", http.StatusInternalServerError)
+				renderError(w, 500, nil)
 				return
 			}
+			post := models.Post{}
+			err = rows.Scan(
+				&post.ID, &post.UserID, &post.Username, &post.Title,
+				&post.Content, &post.Categories, &post.CreatedAt,
+			)
+			rows.Close()
+			posts.Posts = []models.Post{post}
 
-			post.CreatedAt, err = time.Parse(time.DateTime, date)
+			// Fetching comments
+			rows2, err := db.Query(`
+			SELECT
+				users.username,
+				content,
+				comments.created_at
+			FROM comments
+			JOIN users ON users.id = comments.user_id
+			WHERE comments.post_id = ?
+			ORDER BY comments.created_at DESC
+			`, r.URL.Query().Get("post_id"))
 			if err != nil {
-				//Todo : maybe remove the log later
-				log.Println("problème dans la conversion de la date", err)
 				renderError(w, 500, nil)
 				return
 			}
 
-			if categoryText != "" {
-				post.Categories = strings.Split(categoryText, ",")
+			var comments []models.Comment = nil
+			for rows2.Next() {
+				c := models.Comment{}
+				err = rows2.Scan(&c.Username, &c.Content, &c.CreatedAt)
+				if err != nil {
+					renderError(w, 500, nil)
+					return
+				}
 			}
-			posts = append(posts, post)
-		}
+			posts.Comments = comments
+			rows2.Close()
+		} else {
+			rows, err := db.Query(`
+			SELECT
+				posts.id,
+				user_id,
+				users.username,
+				title,
+				content,
+				categories,
+				posts.created_at
+			FROM posts
+			JOIN users ON users.id = posts.user_id
+			ORDER BY posts.created_at DESC
+			`)
+			if err != nil {
+				renderError(w, 500, nil)
+				return
+			}
+			defer rows.Close()
 
-		if err := rows.Err(); err != nil {
-			renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur lecture des posts"), AllowedMethods: nil})
-			//http.Error(w, "Erreur lecture des posts", http.StatusInternalServerError)
-			//Todo : maybe remove the log later
-			log.Println(err)
-			return
+			posts.Posts = make([]models.Post, 0)
+			for rows.Next() {
+				var post models.Post
+				var categoryText string
+				var date string
+				err := rows.Scan(
+					&post.ID,
+					&post.UserID,
+					&post.Username,
+					&post.Title,
+					&post.Content,
+					&categoryText,
+					&date,
+				)
+				if err != nil {
+					renderError(w, 500, nil)
+					return
+				}
+
+				post.CreatedAt, err = time.Parse(time.DateTime, date)
+				if err != nil {
+					log.Println("problème dans la conversion de la date", err)
+					renderError(w, 500, nil)
+					return
+				}
+
+				if categoryText != "" {
+					post.Categories = strings.Split(categoryText, ",")
+				}
+				posts.Posts = append(posts.Posts, post)
+			}
+
+			if err := rows.Err(); err != nil {
+				renderError(w, 500, nil)
+				log.Println(err)
+				return
+			}
 		}
 
 		w, err = executeBuffer(t, w, posts)
 		if err != nil {
-			//TODO : maybe remove the log later
 			log.Println("ReadPosts : erreur de rendu dans l'execution du buffer", err)
 			renderError(w, 500, nil)
 			return
@@ -563,7 +607,7 @@ func ResetPasswordHandler(db *sql.DB) http.HandlerFunc {
 
 			err = login.ResetPassword(db, userID, password)
 			if err != nil {
-				renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur modification du mot de passe"), AllowedMethods: nil})
+				renderError(w, 500, nil)
 				//http.Error(w, "Erreur modification du mot de passe", http.StatusInternalServerError)
 				return
 			}

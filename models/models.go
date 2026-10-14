@@ -23,10 +23,12 @@ type Post struct {
 }
 
 type Comment struct {
-	ID        string
-	PostID    string
-	UserID    string
-	Username  string
-	Content   string
-	CreatedAt time.Time
+	Username     string
+	Content    string
+	CreatedAt  time.Time
+}
+
+type PostsData struct {
+	Posts []Post
+	Comments []Comment
 }
