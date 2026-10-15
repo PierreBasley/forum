@@ -302,7 +302,6 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			}
 
 		case http.MethodPost:
-
 			sessionID, err := login.GetSessionCookie(r, COOKIE_NAME)
 			if err != nil {
 				log.Println("Session ID problème get session", err)
@@ -379,16 +378,17 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		t, err := parseTemplates(POSTS_PATH)
 		if err != nil {
+			log.Printf("erreur de template; %s", err.Error())
 			renderError(w, 500, nil)
 			return
 		}
 
 		var posts models.PostsData
-		if r.URL.Query().Get("post_id") != "" {
+		if r.PathValue("post_id") != "" {
 			// Fetching post
 			rows, err := db.Query(`
 			SELECT
-				posts.post_id,
+				posts.id,
 				posts.user_id,
 				users.username,
 				title,
@@ -397,22 +397,42 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				posts.created_at
 			FROM posts
 			JOIN users ON users.id = posts.user_id
-			ORDER BY posts.created_at DESC
-			`)
+			WHERE posts.id = ?
+			`, r.PathValue("post_id"))
 			if err != nil {
+				log.Printf("erreur de requêtage sur posts, post_id = %s; %s", r.PathValue("post_id"), err.Error())
 				renderError(w, 500, nil)
 				return
 			}
 			post := models.Post{}
+			date := ""
+			if !rows.Next() {
+				log.Println("erreur dans la requête (single post)", rows.Err())
+				renderError(w, 500, nil)
+				return
+			}
+			categories := ""
 			err = rows.Scan(
 				&post.ID, &post.UserID, &post.Username, &post.Title,
-				&post.Content, &post.Categories, &post.CreatedAt,
+				&post.Content, &categories, &date,
 			)
+			if err != nil {
+				log.Printf("erreur de scan sur single post, post_id = %s; %s", r.PathValue("post_id"), err.Error())
+				renderError(w, 500, nil)
+				return
+			}
+			post.Categories = strings.Split(categories, ",")
+			post.CreatedAt, err = time.Parse(time.DateTime, date)
+			if err != nil {
+				log.Printf("erreur de parsing de la date sur single post, post_id = %s; %s", r.PathValue("post_id"), err.Error())
+				renderError(w, 500, nil)
+				return
+			}
 			rows.Close()
 			posts.Posts = []models.Post{post}
 
 			// Fetching comments
-			rows2, err := db.Query(`
+			rows, err = db.Query(`
 			SELECT
 				users.username,
 				content,
@@ -420,24 +440,35 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			FROM comments
 			JOIN users ON users.id = comments.user_id
 			WHERE comments.post_id = ?
-			ORDER BY comments.created_at DESC
-			`, r.URL.Query().Get("post_id"))
+			ORDER BY comments.created_at ASC
+			`, r.PathValue("post_id"))
 			if err != nil {
+				log.Printf("erreur de requêtage sur comments, post_id = %s; %s", r.PathValue("post_id"), err.Error())
 				renderError(w, 500, nil)
 				return
 			}
 
 			var comments []models.Comment = nil
-			for rows2.Next() {
+			for rows.Next() {
+				date := ""
 				c := models.Comment{}
-				err = rows2.Scan(&c.Username, &c.Content, &c.CreatedAt)
+				err = rows.Scan(&c.Username, &c.Content, &date)
 				if err != nil {
+					log.Printf("erreur de scan sur commentaire, post_id = %s; %s", r.PathValue("post_id"), err.Error())
 					renderError(w, 500, nil)
 					return
 				}
+				c.CreatedAt, err = time.Parse(time.DateTime, date)
+				if err != nil {
+					log.Println("problème de conversion de date (commentaire):", err)
+					renderError(w, 500, nil)
+					return
+				}
+				comments = append(comments, c)
 			}
+			log.Println(comments)
 			posts.Comments = comments
-			rows2.Close()
+			rows.Close()
 		} else {
 			rows, err := db.Query(`
 			SELECT
@@ -453,6 +484,7 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			ORDER BY posts.created_at DESC
 			`)
 			if err != nil {
+				log.Printf("erreur de requêtage sur posts, post_id = %s; %s", r.PathValue("post_id"), err.Error())
 				renderError(w, 500, nil)
 				return
 			}
@@ -473,6 +505,7 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 					&date,
 				)
 				if err != nil {
+					log.Printf("erreur de scan sur post, post_id = %s; %s", r.PathValue("post_id"), err.Error())
 					renderError(w, 500, nil)
 					return
 				}
@@ -491,8 +524,8 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			}
 
 			if err := rows.Err(); err != nil {
-				renderError(w, 500, nil)
 				log.Println(err)
+				renderError(w, 500, nil)
 				return
 			}
 		}
