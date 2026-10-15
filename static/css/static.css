@@ -1,21 +1,292 @@
+/* :root sélectionne l’élément racine du document.
+   Dans une page HTML, il s’agit de l’élément <html>. */
+:root {
+    /* Fond général de la page : blanc cassé. */
+    --color-background: #f7f5f0;
+
+    /* Fond des surfaces comme le header et les formulaires. */
+    --color-surface: #ffffff;
+
+    /* Couleur principale des textes. */
+    --color-text: #243238;
+
+    /* Couleur destinée aux informations secondaires : dates, descriptions... */
+    --color-muted: #56656b;
+
+    /* Couleur principale de l’identité visuelle : bleu pétrole. */
+    --color-primary: #185b60;
+
+    /* Variante plus sombre pour le survol des actions principales. */
+    --color-primary-hover: #10464a;
+
+    /* Couleur des bordures et séparations discrètes. */
+    --color-border: #d9dedb;
+
+    /* Échelle d’espacements réutilisables. space est notre convention de nommage, pas de signification particulière pour CSS*/
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+
+    /* Largeur maximale du contenu principal. */
+    --content-width: 72rem;
+
+    /* Arrondi commun aux boutons et à certains blocs. */
+    --radius: 0.5rem;
+}
+
+/* * sélectionne tous les éléments.
+   Les virgules regroupent plusieurs sélecteurs dans une même règle.
+   ::before et ::after désignent les pseudo-éléments correspondants.
+   Les pseudo-éléments ::before et ::after pourront servir plus tard à ajouter des éléments décoratifs en CSS.*/
+*,
+*::before,
+*::after {
+    /* La largeur et la hauteur incluent le contenu,
+       le padding et les bordures, mais pas les marges extérieures. */
+    box-sizing: border-box;
+}
+
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f4f4f4;
+    /* Supprime la marge extérieure que le navigateur
+       applique généralement au body. */
+    margin: 0;
+
+    /* Essaie Segoe UI, puis Arial si nécessaire,
+       puis une police sans empattement disponible. */
+    font-family: "Segoe UI", Arial, sans-serif;
+
+    /* Utilise la taille de police de l’élément racine. */
+    font-size: 1rem;
+
+    /* Définit une hauteur de ligne égale à 1,6 fois
+       la taille de police de l’élément concerné. */
+    line-height: 1.6;
+
+    /* Définit la couleur de texte générale. */
+    color: var(--color-text);
+
+    /* Applique le fond blanc cassé à la page. */
+    background-color: var(--color-background);
 }
 
-h1 {
-    font-size: 100px;
+/* Sélectionne tous les éléments <a>. */
+a {
+    /* Utilise le bleu pétrole pour les liens. */
+    color: var(--color-primary);
+
+    /* Éloigne légèrement le soulignement du texte.
+       em dépend ici de la taille de police du lien. */
+    text-underline-offset: 0.2em;
 }
 
-h1 > a:link {
- color: black;
+/* :hover sélectionne un élément survolé par le pointeur. */
+a:hover {
+    /* Assombrit le lien pendant le survol. */
+    color: var(--color-primary-hover);
 }
 
-h1 > a:visited {
-color: brown
+/* Applique la même déclaration à plusieurs types
+   de contrôles de formulaire. */
+button,
+input,
+select,
+textarea {
+    /* Hérite des caractéristiques typographiques du parent,
+       plutôt que de conserver la police propre au contrôle. */
+    font: inherit;
 }
 
-h1 > a:hover {
- color: yellow;
+/* Cible un élément qui possède le focus lorsque le navigateur
+   estime qu’un indicateur visible est nécessaire,
+   notamment pendant la navigation au clavier. */
+:focus-visible {
+    /* Dessine un contour de 3px autour de l’élément.
+       Ce contour ne prend pas de place dans la mise en page. */
+    outline: 3px solid var(--color-primary);
+
+    /* Éloigne le contour de 4px du bord de l’élément. */
+    outline-offset: 4px;
 }
 
+/* Le point signifie que l’on sélectionne une classe.
+   Cette règle concerne tout élément class="container". */
+.container {
+    /* Choisit la plus petite des deux valeurs :
+       - toute la largeur disponible moins 2rem ;
+       - la largeur maximale définie dans notre variable. */
+    width: min(100% - 2rem, var(--content-width));
+
+    /* Répartit automatiquement l’espace extérieur
+       à gauche et à droite pour centrer le bloc. */
+    margin-inline: auto;
+}
+
+/* Concerne l’enveloppe extérieure du header. */
+.site-header {
+    /* Le bandeau se distingue du fond général par sa surface blanche. */
+    background-color: var(--color-surface);
+
+    /* Ajoute une séparation sous le header.
+       Cette bordure remplace le précédent élément <hr>. */
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Concerne le conteneur intérieur du header.
+Les doubles traits de soulignement sont une convention de nommage indiquant "élément intérieur du composant header". */
+.site-header__inner {
+    /* Active Flexbox pour ses enfants directs :
+       le lien Forum et la navigation. */
+    display: flex;
+
+    /* Dans une disposition en ligne, centre verticalement
+       les enfants les uns par rapport aux autres. */
+    align-items: center;
+
+    /* Répartit l’espace libre entre les enfants :
+       Forum à gauche, navigation à droite. */
+    justify-content: space-between;
+
+    /* Autorise le passage à la ligne si les éléments
+       ne tiennent pas sur une seule ligne. */
+    flex-wrap: wrap;
+
+    /* Définit un espace entre les éléments et entre les lignes. */
+    gap: var(--space-4);
+
+    /* Ajoute de l’espace intérieur en haut et en bas. */
+    padding-block: var(--space-4);
+}
+
+.site-brand {
+    /* Rend le nom plus grand que le texte courant. */
+    font-size: 2rem;
+
+    /* Utilise une graisse forte pour identifier la marque. */
+    font-weight: 700;
+
+    /* Resserre la hauteur de ligne pour ce texte court. */
+    line-height: 1.2;
+
+    /* Retire le soulignement du lien de marque. */
+    text-decoration: none;
+}
+
+.site-nav__list {
+    /* Dispose les <li> sur une ligne par défaut. */
+    display: flex;
+
+    /* Aligne verticalement les éléments,
+       y compris ceux qui contiennent un bouton visuel. */
+    align-items: center;
+
+    /* Autorise les éléments à passer sur plusieurs lignes. */
+    flex-wrap: wrap;
+
+    /* Première valeur : espace entre les lignes.
+       Deuxième valeur : espace entre les colonnes. */
+    gap: var(--space-2) var(--space-4);
+
+    /* Supprime les marges extérieures de la liste. */
+    margin: 0;
+
+    /* Supprime notamment le retrait intérieur prévu pour les puces. */
+    padding: 0;
+
+    /* Supprime les puces. */
+    list-style: none;
+}
+
+.site-nav__link {
+    /* Conserve un comportement en ligne tout en donnant
+       au lien une boîte dont les dimensions sont contrôlables. */
+    display: inline-block;
+
+    /* Agrandit l’espace cliquable au-dessus et au-dessous du texte. */
+    padding-block: var(--space-3);
+
+    /* Donne un peu plus de poids visuel aux liens de navigation. */
+    font-weight: 600;
+
+    /* Retire le soulignement permanent dans cette zone identifiée. */
+    text-decoration: none;
+}
+
+.site-nav__link:hover {
+    /* Ajoute un repère visuel supplémentaire lors du survol. */
+    text-decoration: underline;
+}
+
+.button {
+    /* Crée une boîte flex qui s’insère comme un élément en ligne. */
+    display: inline-flex;
+
+    /* Centre verticalement le contenu du bouton. */
+    align-items: center;
+
+    /* Centre horizontalement le contenu du bouton. */
+    justify-content: center;
+
+    /* Première valeur : haut et bas.
+       Deuxième valeur : gauche et droite. */
+    padding: var(--space-2) var(--space-4);
+
+    /* Définit l’épaisseur, le style et la couleur de la bordure. */
+    border: 1px solid var(--color-primary);
+
+    /* Arrondit les coins. */
+    border-radius: var(--radius);
+
+    /* Applique le fond bleu pétrole. */
+    background-color: var(--color-primary);
+
+    /* Affiche le texte en blanc. */
+    color: var(--color-surface);
+
+    /* Renforce visuellement le libellé. */
+    font-weight: 600;
+
+    /* Retire le soulignement si cette classe est portée par un lien. */
+    text-decoration: none;
+
+    /* Affiche le curseur en forme de main au survol. */
+    cursor: pointer;
+}
+
+.button:hover {
+    /* Assombrit le fond au survol. */
+    background-color: var(--color-primary-hover);
+
+    /* Accorde la bordure avec le nouveau fond. */
+    border-color: var(--color-primary-hover);
+
+    /* Maintient le texte blanc, y compris pour la variante ci-dessous. */
+    color: var(--color-surface);
+}
+
+/* Variante du bouton : contour coloré et fond transparent. */
+.button--outline {
+    /* Laisse apparaître le fond de l’élément situé derrière. */
+    background-color: transparent;
+
+    /* Le texte devient bleu pétrole pour rester lisible sur fond clair. */
+    color: var(--color-primary);
+}
+
+/* Les règles à l’intérieur s’appliquent uniquement
+   lorsque la largeur du viewport est au plus de 48rem. */
+@media (max-width: 48rem) {
+    .site-nav {
+        /* La navigation occupe toute la largeur du conteneur.
+           Avec flex-wrap sur le parent, elle passe sous Forum. */
+        width: 100%;
+    }
+
+    .site-nav__list {
+        /* Réduit l’espace horizontal entre les liens.
+           L’espace entre les lignes reste identique. */
+        gap: var(--space-2) var(--space-3);
+    }
+}

@@ -313,12 +313,14 @@ func Logout(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		sessionID, err := login.GetSessionCookie(r, COOKIE_NAME)
 		if err != nil {
+			log.Println("Erreur dans la récup du nom de cookie :", err)
 			renderError(w, 401, &ErrorDetails{Error: errors.New("Session invalide ou expirée"), AllowedMethods: nil})
 			return
 		}
 
 		err = m.SuppressionSession(sessionID)
 		if err != nil {
+			log.Println("Erreur dans la suppression de la session :", err)
 			renderError(w, 500, nil)
 			return
 		}
