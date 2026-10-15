@@ -440,7 +440,7 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			FROM comments
 			JOIN users ON users.id = comments.user_id
 			WHERE comments.post_id = ?
-			ORDER BY comments.created_at ASC
+			ORDER BY comments.created_at DESC
 			`, r.PathValue("post_id"))
 			if err != nil {
 				log.Printf("erreur de requêtage sur comments, post_id = %s; %s", r.PathValue("post_id"), err.Error())
