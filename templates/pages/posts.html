@@ -4,12 +4,40 @@
 <body>
 {{template "header"}}
     <div class="container">
+        {{if gt (len .Posts) 1}}
         <h2>Publications du forum</h2>
-        {{if .}}
-            <!-- Need to modify logic for single post display (and multiple) -->
-            {{range .}}
+        {{end}}
+        {{if eq (len .Posts) 0}}
+            <p class="no-posts">Aucun post pour l'instant...</p>
+        {{else}}
+        <article>
+            <h2>{{(index .Posts 0).Title}}</h2>
+            <div class="post-title">
+                Publié par <strong>{{(index .Posts 0).Username}}</strong>
+            </div>
+            <div>
+                {{(index .Posts 0).Content}}
+            </div>
+            {{if (index .Posts 0).Categories}}
+            <div>
+                {{range (index .Posts 0).Categories}}
+                <span class="tag">{{.}}</span>
+                {{end}}
+            </div>
+            {{end}}
+            <!-- <div class="reactions">
+                <span class="like">👍 0</span>
+                <span class="dislike">👎 0</span>
+            </div> -->
+            <div class="date">
+                Publié le {{(index .Posts 0).CreatedAt.Format "02/01/2006 à 15:04"}}
+            </div>
+        </article>
+        {{end}}
+        {{if gt (len .Posts) 1}}
+            {{range (slice .Posts 1)}}
             <article>
-                <h2>{{.Title}}</h2>
+                <div class="post-title">{{.Title}}</div>
                 <div>
                     Publié par <strong>{{.Username}}</strong>
                 </div>
@@ -24,24 +52,33 @@
                 </div>
                 {{end}}
                 <!-- <div class="reactions">
-                    <span>👍 0</span>
-                    <span>👎 0</span>
+                    <span class="like">👍 0</span>
+                    <span class="like">👎 0</span>
                 </div> -->
                 <div class="date">
                     Publié le {{.CreatedAt.Format "02/01/2006 à 15:04"}}
                 </div>
-
-                <form method="POST" action="/create-comment">
-          <input type="hidden" name="post_id" value="{{.ID}}" />
-          <textarea name="content" placeholder="Votre commentaire" required></textarea>
-          <button type="submit">commenter</button>
-                </form>
             </article>
             {{end}}
         {{else}}
-            <div>
-                <p>Aucune publication pour le moment.</p>
+            {{ if or (eq .Comments nil) (eq (len .Comments) 0) }}
+            <div class="no-comments">
+                <p>Aucun commentaire trouvé. Sois le premier à commenter!</p>
             </div>
+            {{ else }}
+                {{ range .Comments }}
+                <div class="comment">
+                    <div class="comment-username">{{.Username}}</h4>
+                    <div class="comment-content">{{.Content}}</p>
+                    <div class="comment-date">{{.CreatedAt.Format "02/01/2006 à 15:04"}}</p>
+                </div>
+                {{ end }}
+            {{ end }}
+            <form method="POST" action="/create-comment">
+                <input type="hidden" name="post_id" value="{{ (index .Posts 0).ID}}" />
+                <label id="comment">Ton commentaire</label><textarea id="comment" placeholder="Tout le monde s'en fout de ton com' t'façon..." name="comment" rows="4" cols="80"></textarea>
+                <button type="submit">Envoyer</button>
+            </form>
         {{end}}
     </div>
     {{template "footer"}}
