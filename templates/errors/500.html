@@ -4,11 +4,22 @@
 
 <body>
 
-    {{template "header"}}
+    <div class="container site-header__inner">
+    <a class="site-brand" href="/">Forum</a>
+    </div>
 
-    <h2>Erreur 500 : erreur interne du serveur</h2>
-    {{template "errorDetails" .}}
-    {{template "footer"}}
+    <!-- Le main permet de reprendre les alignements communs
+         et le placement du footer déjà mis en place. -->
+    <main class="container page-content">
+        <!-- Panneau de présentation de l’erreur. -->
+        <section class="error-page" aria-labelledby="error-title">
+            <p class="error-page__code">Erreur 500</p>
+            <h1 id="error-title" class="error-page__title">Erreur du serveur</h1>
+            <p class="error-page__intro">Un problème interne a empêché le traitement de ta demande. Réessaie plus tard</p>
+            <!-- Le point transmet les données d’erreur au fragment. -->
+            {{template "errorDetails" .}}
+        </section>
+    </main>
 
 </body>
 </html>

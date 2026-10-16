@@ -1,5 +1,20 @@
 {{define "errorDetails"}}
-    <p>{{ if .Error }} Détails: {{ .Error.Error }}
-    {{ else }} Consultez l'administration pour plus de détails
-    {{ end }}</p>
+<div class="error-details">
+
+    <p class="error-details__label">
+        Que s’est-il passé ?
+    </p>
+
+    {{ if .Error }} 
+    <p class="error-details__message">Détails: {{ .Error.Error }}</p>
+    {{ else }}
+    <p class="error-details__message">Consultez l'administration pour plus de détails</p>
+    {{ end }}
+
+    <div class="error-details__actions">
+        <a class="button" href="/">
+            Retour à l’accueil
+        </a>
+    </div>
+</div>
 {{ end }}

@@ -4,12 +4,55 @@
 
 <body>
     {{template "header" .Auth}}
-    <h2>Bienvenue {{.Profile.Username}}</h2>
-    <p>Todo : mettre les infos de l'utilisateurs</p>
-    <p>Votre email : {{.Profile.Email}}</p>
-    <p>Profil créé le {{.Profile.CreatedAt.Format "02/01/2006 à 15:04"}}</p>
-    <p>Vous êtes un {{.Profile.Role}}</p>
-    <p>Todo : mettre l'historique de ses posts et commentaires</p>
-    {{template "footer"}}
+   <main class="container page-content">
+
+        <!-- Panneau regroupant les informations du compte. -->
+        <section class="profile-panel" aria-labelledby="profile-title">
+            <div class="profile-panel__header">
+                <h1 id="profile-title">Mon profil</h1>
+                <p>Retrouve les informations de ton compte.</p>
+            </div>
+
+            <!-- Une liste de descriptions associe
+                 chaque intitulé à sa valeur. -->
+            <dl class="profile-details">
+                <div class="profile-details__item">
+                    <dt>Nom d’utilisateur</dt>
+                    <dd>{{.Profile.Username}}</dd>
+                </div>
+
+                <div class="profile-details__item">
+                    <dt>Adresse e-mail</dt>
+                    <dd>{{.Profile.Email}}</dd>
+                </div>
+
+                <div class="profile-details__item">
+                    <dt>Membre depuis le</dt>
+                    <dd>
+                        <time datetime="{{.Profile.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
+                            {{.Profile.CreatedAt.Format "02/01/2006 à 15h04"}}
+                        </time>
+                    </dd>
+                </div>
+                <div class="profile-details__item">
+                    <dt>Rôle</dt>
+                    <dd>
+                        <span class="profile-role">
+                            {{.Profile.Role}}
+                        </span>
+                    </dd>
+                </div>
+            </dl>
+
+            <div class="profile-panel__actions">
+                <a href="/posts">Voir les publications</a>
+
+                <a class="button" href="/create-post">
+                    Poser une question
+                </a>
+            </div>
+
+        </section>
+    </main>
 </body>
 </html>

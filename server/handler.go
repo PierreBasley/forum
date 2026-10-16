@@ -278,7 +278,7 @@ func Profile(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 
-		userSession.CreatedAt, err = time.Parse(time.DateTime, date)
+		user.CreatedAt, err = time.Parse(time.DateTime, date)
 		if err != nil {
 			renderError(w, 500, nil)
 			return
@@ -304,6 +304,7 @@ func Cookies(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// check pourquoi la déconnexion ne marche pas tout le temps
 func Logout(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -384,8 +385,18 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				return
 			}
 
+			if len(title) > 80 {
+				renderError(w, 400, &ErrorDetails{Error: errors.New("Le titre est trop long. Veuillez mettre moins de 50 caractères"), AllowedMethods: nil})
+				return
+			}
+
 			if content == "" {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Le contenu est obligatoire"), AllowedMethods: nil})
+				return
+			}
+
+			if len(content) > 15000 {
+				renderError(w, 400, &ErrorDetails{Error: errors.New("La taille du post a dépassé "), AllowedMethods: nil})
 				return
 			}
 

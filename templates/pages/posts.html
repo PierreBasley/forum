@@ -3,40 +3,96 @@
 {{template "head"}}
 <body>
 {{template "header" .Auth}}
-    <div class="container">
-        <h2>Publications du forum</h2>
-        {{if .Posts}}
-            {{range .Posts}}
-            <article>
-                <h2>{{.Title}}</h2>
-                <div>
-                    Publié par <strong>{{.Username}}</strong>
-                </div>
-                <div>
-                    {{.Content}}
-                </div>
-                {{if .Categories}}
-                <div>
-                    {{range .Categories}}
-                    <span>{{.}}</span>
+    <main class="container page-content">
+        <div class="page-intro">
+            <h1>L’entraide avant tout.</h1>
+            <p>Un problème de code ? Cherchons la solution ensemble.</p>
+        </div>
+
+        <div class="questions-layout">
+             <section class="questions-panel">
+                <div class="questions-panel__header">
+                    <h2 id="questions-title">Questions de la communauté</h2>
+                    {{if .Auth.IsActive}}
+                    <a class="button" href="/create-post">Poser une question</a>
+                    {{else}}
+                    <a class="button" href="/login">Se connecter pour participer</a>
                     {{end}}
                 </div>
+                {{if .Posts}}
+                    {{range .Posts}}
+                    <article class="question">
+                        <h3 class="question__title">{{.Title}}</h3>
+                        <!-- Prépare un aperçu de 600 caractères maximum. -->
+                        {{ $preview := printf "%.600s" .Content }}
+
+                        <!-- Si l’aperçu est différent du contenu, le texte a été raccourci. -->
+                        {{if ne $preview .Content}}
+
+                        <details class="question__details">
+                            <summary class="question__summary">
+                                <!-- Cet aperçu est visible lorsque le bloc est fermé. -->
+                                <span class="question__preview">{{ $preview }}…</span>
+
+                                <!-- Le CSS affiche le libellé adapté à l’état du bloc. -->
+                                <span class="question__read-more">Lire plus</span>
+                                <span class="question__read-less">Réduire le texte</span>
+                            </summary>
+
+                            <!-- Le contenu complet apparaît lorsque le bloc est ouvert. -->
+                            <p class="question__content">{{.Content}}</p>
+                        </details>
+
+                        {{else}}
+
+                        <!-- Un texte court est affiché directement, sans commande inutile. -->
+                        <p class="question__content">{{.Content}}</p>
+
+                        {{end}}
+                        {{if .Categories}}
+                        <ul class="question__tags">
+                            {{range .Categories}}
+                            <li class="tag">{{.}}</li>
+                            {{end}}
+                        </ul>
+                        {{end}}
+                        <p class="question__meta">Publié par <strong>{{.Username}}</strong> le
+                            <time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
+                                {{.CreatedAt.Format "02/01/2006 à 15:04"}}
+                            </time>
+                        </p>
+                    </article>
+                    {{end}}
+                {{else}}
+                    <div class="empty-state">
+                        <h3>La première question reste à poser.</h3>
+                        <p>
+                            Un blocage, une interrogation ?
+                            Lance la discussion avec la communauté.
+                        </p>
+                    </div>
                 {{end}}
-                <!-- <div class="reactions">
-                    <span>👍 0</span>
-                    <span>👎 0</span>
-                </div> -->
-                <div class="date">
-                    Publié le {{.CreatedAt.Format "02/01/2006 à 15:04"}}
-                </div>
-            </article>
-            {{end}}
-        {{else}}
-            <div>
-                <p>Aucune publication pour le moment.</p>
-            </div>
-        {{end}}
-    </div>
+            </section>
+            <aside class="help-panel">
+                <h2 id="help-title">Un coup de main pour commencer</h2>
+                <ol class="help-panel__steps">
+                    <li>
+                        <h3>Décris ton objectif</h3>
+                        <p>Explique ce que tu souhaites obtenir.</p>
+                    </li>
+                    <li>
+                        <h3>Partage le code utile</h3>
+                        <p>Ajoute un extrait pertinent et les éventuels messages d’erreur.</p>
+                    </li>
+                    <li>
+                        <h3>Explique ce que tu as essayé</h3>
+                        <p>Précise les pistes déjà explorées et ce qui bloque encore.</p>
+                    </li>
+                </ol>
+                <p class="help-panel__message">Débutants et expérimentés : avançons ensemble.</p>
+            </aside>
+        </div>
+    </main>
     {{template "footer"}}
 </body>
 </html>

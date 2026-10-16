@@ -3,32 +3,96 @@
 {{template "head"}}
 <body>
 {{template "header" .Auth}}
-    <h2>Créer un nouveau post</h2>
-    <form action="/create-post" method="POST">
-        <label for="title">Titre :</label><br>
-        <input type="text" id="title" name="title" required><br><br>
+     <main class="container page-content">
+        <!-- Reprend le panneau existant et adapte sa largeur
+             grâce à la classe supplémentaire .post-editor. -->
+        <section class="auth-panel post-editor" aria-labelledby="create-post-title">
 
-        <label for="content">Contenu :</label><br>
-        <textarea id="content" name="content" required></textarea><br><br>
+            <div class="auth-panel__intro">
+                <h1 id="create-post-title">Poser une question</h1>
+                <p>Présente ton problème pour aider la communauté à comprendre ce qui te bloque.</p>
+            </div>
 
+            <!-- Conserve la route et les noms de champs existants. -->
+            <form class="form" action="/create-post" method="POST">
+                <div class="form-field">
+                    <label for="title">Titre de la question</label>
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        maxlength="80"
+                        aria-describedby="title-help"
+                        required
+                    >
+                    <p class="form-field__help" id="title-help"> 50 caractères maximum. Résume ton problème avec un titre précis.</p>
+                </div>
 
-        <!-- Maybe, we should create a table categories ? -->
-        <label>Catégories :</label><br>
-        <input type="checkbox" id="cat-sql" name="categories" value="sql">
-        <label for="cat-sql">SQL</label><br>
+                <div class="form-field">
+                    <label for="content">Décris ton problème</label>
+                    <textarea
+                        id="content"
+                        name="content"
+                        rows="12"
+                        maxlength="15000"
+                        aria-describedby="content-help"
+                        required
+                    ></textarea>
 
-        <input type="checkbox" id="cat-go" name="categories" value="go">
-        <label for="cat-go">Go</label><br>
+                    <p class="form-field__help" id="content-help">
+                        10 000 caractères maximum.
+                        Précise le résultat attendu, ce que tu obtiens
+                        et ce que tu as déjà essayé.
+                        Ajoute les extraits de code utiles.
+                    </p>
+                </div>
 
-        <input type="checkbox" id="cat-html" name="categories" value="html">
-        <label for="cat-html">HTML</label><br><br>
+                <!-- Regroupe les cases à cocher sous un intitulé commun. -->
+                <fieldset class="form-options" aria-describedby="categories-help">
+                    <legend>Technologies concernées</legend>
+                    <p class="form-field__help" id="categories-help"> Sélectionne les technologies liées à ta question.</p>
 
-        <button type="submit">Publier</button>
-    </form>
-    <br>
-    <a href="/posts">
-        <button type="button">Voir les posts</button>
-    </a>
+                    <div class="form-options__list">
+                        <!-- Le label englobe la case et son texte :
+                             toute l’étiquette devient cliquable. -->
+                        <label class="checkbox-option">
+                            <input
+                                type="checkbox"
+                                name="categories"
+                                value="sql"
+                            >
+                            <span>SQL</span>
+                        </label>
+
+                        <label class="checkbox-option">
+                            <input
+                                type="checkbox"
+                                name="categories"
+                                value="go"
+                            >
+                            <span>Go</span>
+                        </label>
+
+                        <label class="checkbox-option">
+                            <input
+                                type="checkbox"
+                                name="categories"
+                                value="html"
+                            >
+                            <span>HTML</span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <div class="form-actions">
+                    <a href="/posts">Retour aux publications</a>
+                    <button class="button" type="submit">
+                        Publier ma question
+                    </button>
+                </div>
+            </form>
+        </section>
+    </main>
     {{template "footer"}}
 </body>
 </html>

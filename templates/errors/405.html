@@ -4,11 +4,22 @@
 
 <body>
 
-    {{template "header"}}
+    <div class="container site-header__inner">
+    <a class="site-brand" href="/">Forum</a>
+    </div>
 
-    <h2>Erreur 405 : méthode HTTP non autorisée</h2>
-    {{template "errorDetails" .}}
-    {{template "footer"}}
+    <!-- Le main permet de reprendre les alignements communs
+         et le placement du footer déjà mis en place. -->
+    <main class="container page-content">
+        <!-- Panneau de présentation de l’erreur. -->
+        <section class="error-page" aria-labelledby="error-title">
+            <p class="error-page__code">Erreur 405</p>
+            <h1 id="error-title" class="error-page__title">Méthode non autorisée</h1>
+            <p class="error-page__intro">La méthode HTTP utilisée n'est pas acceptée pour cette adresse.</p>
+            <!-- Le point transmet les données d’erreur au fragment. -->
+            {{template "errorDetails" .}}
+        </section>
+    </main>
 
 </body>
 </html>
