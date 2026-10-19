@@ -367,12 +367,13 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	}
 }
 
-// ReadPosts affiche les publications du forum.
+// ReadPosts affiche les publications classées par nombre de likes.
 func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"GET"}})
-			//http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+			renderError(w, http.StatusMethodNotAllowed, &ErrorDetails{
+				AllowedMethods: []string{"GET"},
+			})
 			return
 		}
 
@@ -387,17 +388,40 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 		if r.PathValue("post_id") != "" {
 			// Fetching post
 			rows, err := db.Query(`
-			SELECT
-				posts.id,
-				posts.user_id,
-				users.username,
-				title,
-				content,
-				categories,
-				posts.created_at
-			FROM posts
-			JOIN users ON users.id = posts.user_id
-			WHERE posts.id = ?
+		// 	renderError(w, http.StatusInternalServerError, nil)
+		// 	return
+		// }
+
+		// // Identifier l'utilisateur connecté.
+		// currentUserID := ""
+
+		// sessionID, cookieErr := login.GetSessionCookie(r, COOKIE_NAME)
+		// if cookieErr == nil {
+		// 	userSession, ok, sessionErr := m.RechercheSession(sessionID)
+		// 	if sessionErr != nil {
+		// 		log.Println("Erreur récupération session :", sessionErr)
+		// 		renderError(w, http.StatusInternalServerError, nil)
+		// 		return
+		// 	}
+
+		// 	if ok {
+		// 		currentUserID = userSession.UserID
+		// 	}
+		// }
+
+		// Compter séparément les likes et les dislikes.
+		// rows, err := db.Query(`
+			// SELECT
+			// 	posts.id,
+			// 	posts.user_id,
+			// 	users.username,
+			// 	title,
+			// 	content,
+			// 	categories,
+			// 	posts.created_at
+			// FROM posts
+			// JOIN users ON users.id = posts.user_id
+			// WHERE posts.id = ?
 			`, r.PathValue("post_id"))
 			if err != nil {
 				log.Printf("erreur de requêtage sur posts, post_id = %s; %s", r.PathValue("post_id"), err.Error())
@@ -445,6 +469,97 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			if err != nil {
 				log.Printf("erreur de requêtage sur comments, post_id = %s; %s", r.PathValue("post_id"), err.Error())
 				renderError(w, 500, nil)
+		// 		posts.title,
+		// 		posts.content,
+		// 		posts.categories,
+		// 		posts.created_at,
+
+		// 		COALESCE(SUM(
+		// 			CASE WHEN likes.reaction = 'like'
+		// 			THEN 1 ELSE 0 END
+		// 		), 0) AS likes_count,
+
+		// 		COALESCE(SUM(
+		// 			CASE WHEN likes.reaction = 'dislike'
+		// 			THEN 1 ELSE 0 END
+		// 		), 0) AS dislikes_count,
+
+		// 		CASE WHEN EXISTS (
+		// 			SELECT 1
+		// 			FROM likes AS user_likes
+		// 			WHERE user_likes.post_id = posts.id
+		// 			  AND user_likes.user_id = ?
+		// 			  AND user_likes.reaction = 'like'
+		// 		) THEN 1 ELSE 0 END AS liked_by_me,
+
+		// 		CASE WHEN EXISTS (
+		// 			SELECT 1
+		// 			FROM likes AS user_likes
+		// 			WHERE user_likes.post_id = posts.id
+		// 			  AND user_likes.user_id = ?
+		// 			  AND user_likes.reaction = 'dislike'
+		// 		) THEN 1 ELSE 0 END AS disliked_by_me
+
+		// 	FROM posts
+		// 	JOIN users ON users.id = posts.user_id
+		// 	LEFT JOIN likes ON likes.post_id = posts.id
+
+		// 	GROUP BY
+		// 		posts.id,
+		// 		posts.user_id,
+		// 		users.username,
+		// 		posts.title,
+		// 		posts.content,
+		// 		posts.categories,
+		// 		posts.created_at
+
+		// 	ORDER BY
+		// 		likes_count DESC,
+		// 		posts.created_at DESC
+		// `, currentUserID, currentUserID)
+
+		// if err != nil {
+		// 	log.Println("Erreur récupération des publications :", err)
+		// 	renderError(w, http.StatusInternalServerError, nil)
+		// 	return
+		// }
+		// defer rows.Close()
+
+		// posts := make([]models.Post, 0)
+
+		// for rows.Next() {
+		// 	var post models.Post
+		// 	var categoryText string
+		// 	var date string
+		// 	var likedByMe int
+		// 	var dislikedByMe int
+
+		// 	err := rows.Scan(
+		// 		&post.ID,
+		// 		&post.UserID,
+		// 		&post.Username,
+		// 		&post.Title,
+		// 		&post.Content,
+		// 		&categoryText,
+		// 		&date,
+		// 		&post.LikesCount,
+		// 		&post.DislikesCount,
+		// 		&likedByMe,
+		// 		&dislikedByMe,
+		// 	)
+		// 	if err != nil {
+		// 		log.Println("Erreur lecture des publications :", err)
+		// 		renderError(w, http.StatusInternalServerError, nil)
+		// 		return
+		// 	}
+
+		// 	post.LikedByMe = likedByMe == 1
+		// 	post.DislikedByMe = dislikedByMe == 1
+
+		// 	post.CreatedAt, err = time.Parse(time.DateTime, date)
+		// 	if err != nil {
+		// 		log.Println("Problème de conversion de la date :", err)
+		// 		renderError(w, http.StatusInternalServerError, nil)
 				return
 			}
 
@@ -528,6 +643,14 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				renderError(w, 500, nil)
 				return
 			}
+
+		// 	posts = append(posts, post)
+		// }
+
+		// if err := rows.Err(); err != nil {
+		// 	log.Println("Erreur lecture des publications :", err)
+		// 	renderError(w, http.StatusInternalServerError, nil)
+		// 	return
 		}
 
 		w, err = executeBuffer(t, w, posts)
@@ -1019,3 +1142,118 @@ func ResendTwoFactorHandler(db *sql.DB) http.HandlerFunc {
 
 }
 */
+
+// LikeHandler ajoute, retire ou remplace la réaction d'une publication.
+func LikeHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			renderError(w, http.StatusMethodNotAllowed, &ErrorDetails{
+				AllowedMethods: []string{"POST"},
+			})
+			return
+		}
+
+		// Vérifier que l'utilisateur est connecté.
+		sessionID, err := login.GetSessionCookie(r, COOKIE_NAME)
+		if err != nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		userSession, ok, err := m.RechercheSession(sessionID)
+		if err != nil {
+			log.Println("Erreur récupération session :", err)
+			renderError(w, http.StatusInternalServerError, nil)
+			return
+		}
+
+		if !ok {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		// Récupérer les données du formulaire.
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, "Formulaire invalide", http.StatusBadRequest)
+			return
+		}
+
+		postID := strings.TrimSpace(r.FormValue("post_id"))
+		reaction := strings.TrimSpace(r.FormValue("reaction"))
+
+		if postID == "" {
+			http.Error(w, "Identifiant de publication manquant", http.StatusBadRequest)
+			return
+		}
+
+		// Accepter uniquement les deux réactions autorisées.
+		if reaction != "like" && reaction != "dislike" {
+			http.Error(w, "Réaction invalide", http.StatusBadRequest)
+			return
+		}
+
+		userID := userSession.UserID
+
+		// Commencer une transaction.
+		tx, err := db.Begin()
+		if err != nil {
+			log.Println("Erreur début transaction :", err)
+			http.Error(w, "Erreur serveur", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback()
+
+		// Chercher la réaction existante de cet utilisateur.
+		var existingReaction string
+
+		err = tx.QueryRow(
+			"SELECT reaction FROM likes WHERE user_id = ? AND post_id = ?",
+			userID,
+			postID,
+		).Scan(&existingReaction)
+
+		switch {
+		case err == nil && existingReaction == reaction:
+			// Même réaction : on la retire.
+			_, err = tx.Exec(
+				"DELETE FROM likes WHERE user_id = ? AND post_id = ?",
+				userID,
+				postID,
+			)
+
+		case err == nil:
+			// Réaction différente : on la remplace.
+			_, err = tx.Exec(
+				"UPDATE likes SET reaction = ? WHERE user_id = ? AND post_id = ?",
+				reaction,
+				userID,
+				postID,
+			)
+
+		case errors.Is(err, sql.ErrNoRows):
+			// Aucune réaction : on ajoute celle demandée.
+			_, err = tx.Exec(
+				"INSERT INTO likes (user_id, post_id, reaction) VALUES (?, ?, ?)",
+				userID,
+				postID,
+				reaction,
+			)
+		}
+
+		if err != nil {
+			log.Println("Erreur modification réaction :", err)
+			http.Error(w, "Impossible de modifier la réaction", http.StatusInternalServerError)
+			return
+		}
+
+		// Valider la transaction.
+		if err := tx.Commit(); err != nil {
+			log.Println("Erreur validation transaction :", err)
+			http.Error(w, "Erreur serveur", http.StatusInternalServerError)
+			return
+		}
+
+		// Revenir à la liste des publications.
+		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+	}
+}
