@@ -1,0 +1,1360 @@
+/* :root sélectionne l’élément racine du document.
+   Dans une page HTML, il s’agit de l’élément <html>. */
+:root {
+    /* Fond général de la page : blanc cassé. */
+    --color-background: #f7f5f0;
+
+    /* Fond des surfaces comme le header et les formulaires. */
+    --color-surface: #ffffff;
+
+    /* Couleur principale des textes. */
+    --color-text: #243238;
+
+    /* Couleur destinée aux informations secondaires : dates, descriptions... */
+    --color-muted: #56656b;
+
+    /* Couleur principale de l’identité visuelle : bleu pétrole. */
+    --color-primary: #185b60;
+
+    /* Variante plus sombre pour le survol des actions principales. */
+    --color-primary-hover: #10464a;
+
+    /* Couleur des bordures et séparations discrètes. */
+    --color-border: #d9dedb;
+
+    /* Échelle d’espacements réutilisables. space est notre convention de nommage, pas de signification particulière pour CSS*/
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+
+    /* Largeur maximale du contenu principal. */
+    --content-width: 72rem;
+
+    /* Arrondi commun aux boutons et à certains blocs. */
+    --radius: 0.5rem;
+
+    /* Fond des étiquettes de technologies. */
+   --color-tag-background: #e7f1f2;
+
+   /* Fond chaud de l’encadré de conseils. */
+   --color-help-background: #fff2e8;
+
+   /* Bordure de cet encadré. */
+   --color-help-border: #ead5c5;
+
+   /* Accent terracotta pour les numéros des conseils. */
+   --color-accent: #a44832;
+}
+
+/* * sélectionne tous les éléments.
+   Les virgules regroupent plusieurs sélecteurs dans une même règle.
+   ::before et ::after désignent les pseudo-éléments correspondants.
+   Les pseudo-éléments ::before et ::after pourront servir plus tard à ajouter des éléments décoratifs en CSS.*/
+*,
+*::before,
+*::after {
+    /* La largeur et la hauteur incluent le contenu,
+       le padding et les bordures, mais pas les marges extérieures. */
+    box-sizing: border-box;
+}
+
+body {
+    /* Supprime la marge extérieure que le navigateur
+       applique généralement au body. */
+    margin: 0;
+
+    /* Essaie Segoe UI, puis Arial si nécessaire,
+       puis une police sans empattement disponible. */
+    font-family: "Segoe UI", Arial, sans-serif;
+
+    /* Utilise la taille de police de l’élément racine. */
+    font-size: 1rem;
+
+    /* Définit une hauteur de ligne égale à 1,6 fois
+       la taille de police de l’élément concerné. */
+    line-height: 1.6;
+
+    /* Définit la couleur de texte générale. */
+    color: var(--color-text);
+
+    /* Applique le fond blanc cassé à la page. */
+    background-color: var(--color-background);
+
+    /* Donne au body une hauteur minimale égale à celle de la fenêtre.
+       Cette déclaration sert aussi de repli pour les navigateurs
+       qui ne reconnaissent pas l’unité suivante. */
+    min-height: 100vh;
+
+    /* Utilise la hauteur dynamique de la fenêtre,
+       notamment lorsque les barres du navigateur mobile changent de taille. */
+    min-height: 100dvh;
+
+    /* Organise les enfants directs du body avec Flexbox. */
+    display: flex;
+
+    /* Place le header, le main et le footer verticalement. */
+    flex-direction: column;
+}
+
+body > main {
+    /* Permet au contenu principal d’occuper l’espace vertical restant. */
+    flex-grow: 1;
+}
+
+/* Sélectionne tous les éléments <a>. */
+a {
+    /* Utilise le bleu pétrole pour les liens. */
+    color: var(--color-primary);
+
+    /* Éloigne légèrement le soulignement du texte.
+       em dépend ici de la taille de police du lien. */
+    text-underline-offset: 0.2em;
+}
+
+/* :hover sélectionne un élément survolé par le pointeur. */
+a:hover {
+    /* Assombrit le lien pendant le survol. */
+    color: var(--color-primary-hover);
+}
+
+/* Applique la même déclaration à plusieurs types
+   de contrôles de formulaire. */
+button,
+input,
+select,
+textarea {
+    /* Hérite des caractéristiques typographiques du parent,
+       plutôt que de conserver la police propre au contrôle. */
+    font: inherit;
+}
+
+/* Cible un élément qui possède le focus lorsque le navigateur
+   estime qu’un indicateur visible est nécessaire,
+   notamment pendant la navigation au clavier. */
+:focus-visible {
+    /* Dessine un contour de 3px autour de l’élément.
+       Ce contour ne prend pas de place dans la mise en page. */
+    outline: 3px solid var(--color-primary);
+
+    /* Éloigne le contour de 4px du bord de l’élément. */
+    outline-offset: 4px;
+}
+
+/* Le point signifie que l’on sélectionne une classe.
+   Cette règle concerne tout élément class="container". */
+.container {
+    /* Choisit la plus petite des deux valeurs :
+       - toute la largeur disponible moins 2rem ;
+       - la largeur maximale définie dans notre variable. */
+    width: min(100% - 2rem, var(--content-width));
+
+    /* Répartit automatiquement l’espace extérieur
+       à gauche et à droite pour centrer le bloc. */
+    margin-inline: auto;
+}
+
+/* Concerne l’enveloppe extérieure du header. */
+.site-header {
+    /* Le bandeau se distingue du fond général par sa surface blanche. */
+    background-color: var(--color-surface);
+
+    /* Ajoute une séparation sous le header.
+       Cette bordure remplace le précédent élément <hr>. */
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Concerne le conteneur intérieur du header.
+Les doubles traits de soulignement sont une convention de nommage indiquant "élément intérieur du composant header". */
+.site-header__inner {
+    /* Active Flexbox pour ses enfants directs :
+       le lien Forum et la navigation. */
+    display: flex;
+
+    /* Dans une disposition en ligne, centre verticalement
+       les enfants les uns par rapport aux autres. */
+    align-items: center;
+
+    /* Répartit l’espace libre entre les enfants :
+       Forum à gauche, navigation à droite. */
+    justify-content: space-between;
+
+    /* Autorise le passage à la ligne si les éléments
+       ne tiennent pas sur une seule ligne. */
+    flex-wrap: wrap;
+
+    /* Définit un espace entre les éléments et entre les lignes. */
+    gap: var(--space-4);
+
+    /* Ajoute de l’espace intérieur en haut et en bas. */
+    padding-block: var(--space-4);
+}
+
+.site-brand {
+    /* Rend le nom plus grand que le texte courant. */
+    font-size: 2rem;
+
+    /* Utilise une graisse forte pour identifier la marque. */
+    font-weight: 700;
+
+    /* Resserre la hauteur de ligne pour ce texte court. */
+    line-height: 1.2;
+
+    /* Retire le soulignement du lien de marque. */
+    text-decoration: none;
+}
+
+.site-nav__list {
+    /* Dispose les <li> sur une ligne par défaut. */
+    display: flex;
+
+    /* Aligne verticalement les éléments,
+       y compris ceux qui contiennent un bouton visuel. */
+    align-items: center;
+
+    /* Autorise les éléments à passer sur plusieurs lignes. */
+    flex-wrap: wrap;
+
+    /* Première valeur : espace entre les lignes.
+       Deuxième valeur : espace entre les colonnes. */
+    gap: var(--space-2) var(--space-4);
+
+    /* Supprime les marges extérieures de la liste. */
+    margin: 0;
+
+    /* Supprime notamment le retrait intérieur prévu pour les puces. */
+    padding: 0;
+
+    /* Supprime les puces. */
+    list-style: none;
+}
+
+.site-nav__link {
+    /* Conserve un comportement en ligne tout en donnant
+       au lien une boîte dont les dimensions sont contrôlables. */
+    display: inline-block;
+
+    /* Agrandit l’espace cliquable au-dessus et au-dessous du texte. */
+    padding-block: var(--space-3);
+
+    /* Donne un peu plus de poids visuel aux liens de navigation. */
+    font-weight: 600;
+
+    /* Retire le soulignement permanent dans cette zone identifiée. */
+    text-decoration: none;
+}
+
+.site-nav__link:hover {
+    /* Ajoute un repère visuel supplémentaire lors du survol. */
+    text-decoration: underline;
+}
+
+.button {
+    /* Crée une boîte flex qui s’insère comme un élément en ligne. */
+    display: inline-flex;
+
+    /* Centre verticalement le contenu du bouton. */
+    align-items: center;
+
+    /* Centre horizontalement le contenu du bouton. */
+    justify-content: center;
+
+    /* Première valeur : haut et bas.
+       Deuxième valeur : gauche et droite. */
+    padding: var(--space-2) var(--space-4);
+
+    /* Définit l’épaisseur, le style et la couleur de la bordure. */
+    border: 1px solid var(--color-primary);
+
+    /* Arrondit les coins. */
+    border-radius: var(--radius);
+
+    /* Applique le fond bleu pétrole. */
+    background-color: var(--color-primary);
+
+    /* Affiche le texte en blanc. */
+    color: var(--color-surface);
+
+    /* Renforce visuellement le libellé. */
+    font-weight: 600;
+
+    /* Retire le soulignement si cette classe est portée par un lien. */
+    text-decoration: none;
+
+    /* Affiche le curseur en forme de main au survol. */
+    cursor: pointer;
+}
+
+.button:hover {
+    /* Assombrit le fond au survol. */
+    background-color: var(--color-primary-hover);
+
+    /* Accorde la bordure avec le nouveau fond. */
+    border-color: var(--color-primary-hover);
+
+    /* Maintient le texte blanc, y compris pour la variante ci-dessous. */
+    color: var(--color-surface);
+}
+
+/* Variante du bouton : contour coloré et fond transparent. */
+.button--outline {
+    /* Laisse apparaître le fond de l’élément situé derrière. */
+    background-color: transparent;
+
+    /* Le texte devient bleu pétrole pour rester lisible sur fond clair. */
+    color: var(--color-primary);
+}
+
+.page-content {
+    /* Espace intérieur en haut et en bas du contenu principal. */
+    padding-block: var(--space-8);
+}
+
+.page-intro {
+    /* Sépare l’introduction de la liste et de l’encadré d’aide. */
+    margin-bottom: var(--space-8);
+}
+
+/* Le symbole > cible uniquement un enfant direct. */
+.page-intro > h1 {
+    /* Supprime les marges appliquées par défaut au titre. */
+    margin: 0;
+
+    /* Taille fluide :
+       minimum 2rem, valeur souhaitée 4vw, maximum 3rem.
+       On utilise clamp pour ramener une valeur entre deux bornes inférieure et supérieure
+       La fonction utilise trois paramètres : une valeur minimale, une valeur préférée et une valeur maximale autorisée*/
+    font-size: clamp(2rem, 4vw, 3rem);
+
+    /* Resserre les lignes lorsque le titre occupe plusieurs lignes. */
+    line-height: 1.15;
+}
+
+.page-intro > p {
+    /* Ajoute une marge au-dessus ; aucune sur les autres côtés. */
+    margin: var(--space-3) 0 0;
+
+    /* Rend le texte légèrement plus grand que le texte courant. */
+    font-size: 1.125rem;
+
+    /* Donne moins de poids visuel au sous-titre. */
+    color: var(--color-muted);
+
+    /* Limite la longueur des lignes. */
+    max-width: 60ch;
+}
+
+.questions-layout {
+    /* Organise les enfants directs dans une grille. */
+    display: grid;
+
+    /* Première colonne : utilise l’espace restant.
+       Deuxième colonne : mesure 18rem. */
+    grid-template-columns: minmax(0, 1fr) 18rem;
+
+    /* Espace entre les colonnes et, si nécessaire, entre les lignes. */
+    gap: var(--space-6);
+
+    /* Aligne les blocs en haut sans égaliser leur hauteur par étirement. */
+    align-items: start;
+}
+
+.questions-panel {
+    /* Détache le panneau du fond blanc cassé de la page. */
+    background-color: var(--color-surface);
+
+    /* Délimite le panneau avec une bordure discrète. */
+    border: 1px solid var(--color-border);
+
+    /* Reprend l’arrondi commun aux composants. */
+    border-radius: var(--radius);
+}
+
+.questions-panel__header {
+    /* Place le titre et l’action sur une ligne lorsque l’espace le permet. */
+    display: flex;
+
+    /* Centre verticalement les deux éléments. */
+    align-items: center;
+
+    /* Utilise l’espace disponible pour les éloigner. */
+    justify-content: space-between;
+
+    /* Autorise l’action à passer sous le titre si nécessaire. */
+    flex-wrap: wrap;
+
+    /* Maintient une séparation entre le titre et l’action. */
+    gap: var(--space-4);
+
+    /* Éloigne le contenu des bords du panneau. */
+    padding: var(--space-6);
+
+    /* Sépare cet en-tête de la première publication. */
+    border-bottom: 1px solid var(--color-border);
+}
+
+.questions-panel__header > h2 {
+    /* Retire les marges natives du titre. */
+    margin: 0;
+
+    /* Établit une taille intermédiaire entre le h1 et les publications. */
+    font-size: 1.5rem;
+
+    /* Garde une hauteur de ligne compacte mais lisible. */
+    line-height: 1.3;
+}
+
+.question {
+    /* Crée de l’espace à l’intérieur de chaque publication. */
+    padding: var(--space-6);
+
+    /* Autorise la coupure d’un mot ou d’une URL trop longue
+       lorsque cela est nécessaire pour éviter un débordement. */
+    overflow-wrap: anywhere;
+}
+
+/* Cible une publication immédiatement précédée
+   par une autre publication ayant le même parent. */
+.question + .question {
+    /* Sépare les publications sans ajouter de bordure avant la première. */
+    border-top: 1px solid var(--color-border);
+}
+
+.question__title {
+    /* Supprime les marges du h3. */
+    margin: 0;
+
+    /* Met le titre en évidence par rapport au contenu courant. */
+    font-size: 1.125rem;
+
+    /* Préserve la lisibilité des titres sur plusieurs lignes. */
+    line-height: 1.4;
+}
+
+.question__content {
+    /* Sépare le contenu du titre. */
+    margin: var(--space-3) 0 0;
+
+    /* Conserve les espaces et retours à la ligne du texte,
+       tout en autorisant le retour à la ligne automatique. */
+    white-space: pre-wrap;
+}
+
+.question__meta {
+    /* Sépare l’auteur et la date des éléments précédents. */
+    margin: var(--space-4) 0 0;
+
+    /* Rend ces informations un peu plus petites. */
+    font-size: 0.875rem;
+
+    /* Les place visuellement au second plan. */
+    color: var(--color-muted);
+}
+
+.question__tags {
+    /* Dispose les étiquettes côte à côte. */
+    display: flex;
+
+    /* Autorise plusieurs lignes si elles ne tiennent pas sur une seule. */
+    flex-wrap: wrap;
+
+    /* Espace les étiquettes. */
+    gap: var(--space-2);
+
+    /* Sépare les étiquettes du contenu de la publication. */
+    margin: var(--space-4) 0 0;
+
+    /* Retire le retrait intérieur de la liste. */
+    padding: 0;
+
+    /* Supprime les puces. */
+    list-style: none;
+}
+
+.tag {
+    /* Ajoute de l’espace autour du nom de la technologie. */
+    padding: var(--space-1) var(--space-2);
+
+    /* Applique le fond légèrement bleuté. */
+    background-color: var(--color-tag-background);
+
+    /* Reprend la couleur principale pour le texte. */
+    color: var(--color-primary);
+
+    /* Arrondit légèrement les angles. */
+    border-radius: 0.25rem;
+
+    /* Rend les étiquettes compactes. */
+    font-size: 0.875rem;
+
+    /* Conserve une hauteur de ligne confortable. */
+    line-height: 1.4;
+}
+
+.help-panel {
+    /* Éloigne les conseils des bords de l’encadré. */
+    padding: var(--space-6);
+
+    /* Introduit une teinte chaleureuse dans la page. */
+    background-color: var(--color-help-background);
+
+    /* Délimite le bloc avec une bordure assortie. */
+    border: 1px solid var(--color-help-border);
+
+    /* Utilise l’arrondi commun. */
+    border-radius: var(--radius);
+}
+
+.help-panel > h2 {
+    /* Supprime les marges du titre. */
+    margin: 0;
+
+    /* Garde un titre moins imposant que celui de la liste principale. */
+    font-size: 1.25rem;
+
+    /* Ajuste l’espacement entre les lignes du titre. */
+    line-height: 1.3;
+}
+
+.help-panel__steps {
+    /* Sépare la liste de conseils de son titre. */
+    margin: var(--space-6) 0 0;
+
+    /* Réserve de la place aux numéros, à gauche dans notre page en français. */
+    padding-inline-start: var(--space-6);
+}
+
+.help-panel__steps > li + li {
+    /* Espace chaque conseil du précédent, sauf le premier. */
+    margin-top: var(--space-6);
+}
+
+/* ::marker désigne ici le numéro affiché devant chaque élément de liste. */
+.help-panel__steps > li::marker {
+    /* Utilise la couleur terracotta pour les numéros. */
+    color: var(--color-accent);
+
+    /* Renforce leur présence. */
+    font-weight: 700;
+}
+
+/* L’espace entre les sélecteurs cible les descendants,
+   y compris les h3 placés à l’intérieur des li. */
+.help-panel__steps h3 {
+    /* Retire les marges natives. */
+    margin: 0;
+
+    /* Conserve une taille de texte courante. */
+    font-size: 1rem;
+}
+
+.help-panel__steps p {
+    /* Sépare l’explication de son titre. */
+    margin: var(--space-2) 0 0;
+
+    /* Réduit légèrement la taille de l’explication. */
+    font-size: 0.9375rem;
+}
+
+.help-panel__message {
+    /* Sépare le message final des conseils. */
+    margin: var(--space-6) 0 0;
+
+    /* Éloigne le message de la bordure placée au-dessus. */
+    padding-top: var(--space-4);
+
+    /* Crée une séparation visuelle. */
+    border-top: 1px solid var(--color-help-border);
+
+    /* Met en valeur le message communautaire. */
+    font-weight: 600;
+}
+
+.empty-state {
+    /* Donne de l’espace au message lorsque la liste est vide. */
+    padding: var(--space-8);
+}
+
+.empty-state > h3 {
+    /* Retire les marges du titre. */
+    margin: 0;
+}
+
+.empty-state > p {
+    /* Sépare le texte d’accompagnement de son titre. */
+    margin: var(--space-3) 0 0;
+
+    /* Utilise la couleur des informations secondaires. */
+    color: var(--color-muted);
+}
+
+.question__details {
+    /* Sépare le bloc dépliable du titre de la publication. */
+    margin-top: var(--space-3);
+}
+
+.question__summary {
+    /* Retire la présentation en élément de liste du summary,
+       notamment son marqueur triangulaire standard. */
+    display: block;
+
+    /* Indique que cette zone est interactive. */
+    cursor: pointer;
+}
+
+.question__preview {
+    /* Place l’aperçu sur sa propre ligne,
+       avant la commande « Lire plus ». */
+    display: block;
+
+    /* Préserve les retours à la ligne et les espaces du texte,
+       tout en permettant le retour à la ligne automatique. */
+    white-space: pre-wrap;
+}
+
+.question__read-more,
+.question__read-less {
+    /* Permet de donner un espace vertical au libellé. */
+    display: inline-block;
+
+    /* Sépare le libellé de l’aperçu situé au-dessus. */
+    margin-top: var(--space-2);
+
+    /* Reprend la couleur principale des actions. */
+    color: var(--color-primary);
+
+    /* Renforce la visibilité de la commande. */
+    font-weight: 600;
+
+    /* Rend son caractère interactif plus explicite. */
+    text-decoration: underline;
+
+    /* Éloigne légèrement le soulignement du texte. */
+    text-underline-offset: 0.2em;
+}
+
+.question__read-less {
+    /* Cache la commande de réduction lorsque le bloc est fermé. */
+    display: none;
+}
+
+/* [open] sélectionne un élément possédant l’attribut open.
+   Ces règles concernent donc uniquement le bloc déplié. */
+.question__details[open] .question__preview,
+.question__details[open] .question__read-more {
+    /* Cache l’aperçu et « Lire plus » :
+       le texte complet devient le seul contenu affiché. */
+    display: none;
+}
+
+.question__details[open] .question__read-less {
+    /* Affiche la commande permettant de refermer le bloc. */
+    display: inline-block;
+
+    /* Retire l’espace devenu inutile puisque l’aperçu est masqué. */
+    margin-top: 0;
+}
+
+.auth-panel {
+    /* Utilise toute la largeur disponible sur les petits écrans. */
+    width: 100%;
+
+    /* Limite la largeur du panneau sur ordinateur :
+       un formulaire court n’a pas besoin d’occuper toute la page. */
+    max-width: 30rem;
+
+    /* Centre horizontalement le panneau dans son parent. */
+    margin-inline: auto;
+
+    /* Éloigne le contenu des bords du panneau. */
+    padding: var(--space-8);
+
+    /* Applique une surface blanche sur le fond blanc cassé du site. */
+    background-color: var(--color-surface);
+
+    /* Délimite le panneau avec une bordure discrète. */
+    border: 1px solid var(--color-border);
+
+    /* Reprend les arrondis communs à l’interface. */
+    border-radius: var(--radius);
+}
+
+.auth-panel__intro {
+    /* Sépare l’introduction du formulaire. */
+    margin-bottom: var(--space-6);
+}
+
+.auth-panel__intro > h1 {
+    /* Supprime les marges par défaut du titre. */
+    margin: 0;
+
+    /* Donne au titre une taille importante, adaptée à ce petit panneau. */
+    font-size: 2rem;
+
+    /* Conserve une hauteur de ligne compacte si le titre se répartit. */
+    line-height: 1.2;
+}
+
+.auth-panel__intro > p {
+    /* Ajoute un espace au-dessus du texte d’accompagnement. */
+    margin: var(--space-3) 0 0;
+
+    /* Rend ce texte moins dominant que le titre. */
+    color: var(--color-muted);
+}
+
+.form {
+    /* Organise les enfants directs dans une grille. */
+    display: grid;
+
+    /* Définit une seule colonne pouvant rétrécir avec son conteneur. */
+    grid-template-columns: minmax(0, 1fr);
+
+    /* Espace régulièrement les groupes de champs, le lien et le bouton. */
+    gap: var(--space-4);
+}
+
+.form-field {
+    /* Place le label et son champ dans une disposition en grille. */
+    display: grid;
+
+    /* Conserve une seule colonne : le label au-dessus du champ. */
+    grid-template-columns: minmax(0, 1fr);
+
+    /* Définit l’espace entre le libellé et le champ. */
+    gap: var(--space-2);
+}
+
+.form-field > label {
+    /* Renforce légèrement le libellé pour faciliter le repérage. */
+    font-weight: 600;
+}
+
+.form-field > input,
+.form-field > select,
+.form-field > textarea {
+    /* Remplit la largeur disponible dans le groupe. */
+    width: 100%;
+
+    /* Permet au contrôle de rétrécir dans une grille,
+       malgré ses dimensions intrinsèques. */
+    min-width: 0;
+
+    /* Ajoute de l’espace entre le texte saisi et les bords du contrôle. */
+    padding: var(--space-3) var(--space-4);
+
+    /* Applique la couleur principale du texte. */
+    color: var(--color-text);
+
+    /* Utilise un fond blanc. */
+    background-color: var(--color-surface);
+
+    /* Dessine une bordure plus visible que les simples séparations,
+       pour que les limites des champs soient faciles à repérer. */
+    border: 1px solid var(--color-muted);
+
+    /* Harmonise l’arrondi avec celui des autres composants. */
+    border-radius: var(--radius);
+}
+
+.form-field > textarea {
+    /* Prévoit une hauteur initiale confortable pour un texte long. */
+    min-height: 10rem;
+
+    /* Autorise le redimensionnement vertical,
+       sans laisser la zone déborder horizontalement du formulaire. */
+    resize: vertical;
+}
+
+:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 4px;
+}
+
+.form__recovery {
+    /* Aligne ce lien à la fin de sa cellule de grille,
+       donc à droite dans notre page en français. */
+    justify-self: end;
+
+    /* Rend l’action secondaire légèrement plus discrète. */
+    font-size: 0.875rem;
+}
+
+.form__submit {
+    /* Donne au bouton principal toute la largeur du formulaire. */
+    width: 100%;
+}
+
+.auth-panel__alternative {
+    /* Sépare la proposition d’inscription du formulaire. */
+    margin: var(--space-6) 0 0;
+
+    /* Ajoute de l’espace sous la bordure de séparation. */
+    padding-top: var(--space-4);
+
+    /* Distingue l’inscription de l’action principale de connexion. */
+    border-top: 1px solid var(--color-border);
+
+    /* Centre le texte à l’intérieur du paragraphe. */
+    text-align: center;
+
+    /* Réduit légèrement la taille de cette information secondaire. */
+    font-size: 0.875rem;
+
+    /* Utilise la couleur secondaire pour le texte ordinaire. */
+    color: var(--color-muted);
+}
+
+/* Cible les explications complémentaires placées sous les champs. */
+.form-field__help {
+    /* Retire les marges natives du paragraphe.
+       Le gap de .form-field gère déjà l’espacement. */
+    margin: 0;
+
+    /* Rend l’explication légèrement plus petite que le texte courant. */
+    font-size: 0.875rem;
+
+    /* Donne moins de poids visuel à l’aide qu’au libellé du champ. */
+    color: var(--color-muted);
+
+    /* Préserve une lecture confortable si l’aide occupe plusieurs lignes. */
+    line-height: 1.5;
+}
+
+.post-editor {
+    /* Autorise un panneau plus large que celui de connexion,
+       afin de faciliter la rédaction d’un texte long. */
+    max-width: 48rem;
+}
+
+.form-options {
+    /* Autorise le groupe à rétrécir dans la grille du formulaire,
+       même si son contenu possède une largeur intrinsèque importante. */
+    min-width: 0;
+
+    /* Supprime les marges extérieures natives. */
+    margin: 0;
+
+    /* Supprime les espacements intérieurs natifs. */
+    padding: 0;
+
+    /* Retire la bordure native du fieldset. */
+    border: 0;
+}
+
+.form-options > legend {
+    /* Retire l’espacement intérieur natif autour du texte de la légende. */
+    padding: 0;
+
+    /* Sépare l’intitulé du texte d’aide situé dessous. */
+    margin-bottom: var(--space-2);
+
+    /* Donne à la légende le même poids visuel que les autres labels. */
+    font-weight: 600;
+}
+
+.form-options__list {
+    /* Place les choix les uns à côté des autres. */
+    display: flex;
+
+    /* Autorise le passage à la ligne si la largeur manque. */
+    flex-wrap: wrap;
+
+    /* Espace les choix horizontalement et verticalement. */
+    gap: var(--space-3);
+
+    /* Sépare les choix du texte d’aide. */
+    margin-top: var(--space-3);
+}
+
+.checkbox-option {
+    /* Aligne la case et son texte dans une même boîte en ligne. */
+    display: inline-flex;
+
+    /* Centre verticalement la case par rapport au texte. */
+    align-items: center;
+
+    /* Ajoute un espace entre la case et son libellé. */
+    gap: var(--space-2);
+
+    /* Agrandit la surface cliquable du label. */
+    padding: var(--space-2) var(--space-3);
+
+    /* Délimite chaque choix. */
+    border: 1px solid var(--color-border);
+
+    /* Reprend les angles arrondis communs au site. */
+    border-radius: var(--radius);
+
+    /* Signale que l’étiquette est interactive. */
+    cursor: pointer;
+}
+
+/* Cible uniquement les inputs de type checkbox
+   qui sont des enfants directs de .checkbox-option. */
+.checkbox-option > input[type="checkbox"] {
+    /* Supprime les marges natives autour de la case. */
+    margin: 0;
+
+    /* Définit une largeur adaptée à la case. */
+    width: 1rem;
+
+    /* Définit sa hauteur. */
+    height: 1rem;
+
+    /* Évite que Flexbox réduise la largeur de la case
+       lorsque l’espace devient limité. */
+    flex-shrink: 0;
+
+    /* Personnalise la couleur d’accent du contrôle natif,
+       notamment lorsqu’il est coché. */
+    accent-color: var(--color-primary);
+
+    /* Conserve le curseur interactif au-dessus de la case elle-même. */
+    cursor: pointer;
+}
+
+.checkbox-option:hover {
+    /* Renforce la bordure lorsque le choix est survolé. */
+    border-color: var(--color-primary);
+}
+
+.checkbox-option:focus-within {
+    /* Renforce également la bordure lorsque la case intérieure
+       reçoit le focus, notamment au clavier. */
+    border-color: var(--color-primary);
+}
+
+.form-actions {
+    /* Place le lien de retour et le bouton sur une même ligne. */
+    display: flex;
+
+    /* Centre verticalement les deux éléments. */
+    align-items: center;
+
+    /* Positionne le retour à gauche et la publication à droite. */
+    justify-content: space-between;
+
+    /* Autorise le passage à la ligne si nécessaire. */
+    flex-wrap: wrap;
+
+    /* Maintient de l’espace entre les actions. */
+    gap: var(--space-4);
+
+    /* Crée une respiration avant la zone d’actions. */
+    padding-top: var(--space-4);
+
+    /* Sépare les actions des champs. */
+    border-top: 1px solid var(--color-border);
+}
+
+.profile-panel {
+    /* Utilise toute la largeur disponible sur les petits écrans. */
+    width: 100%;
+
+    /* Limite la largeur sur ordinateur pour garder
+       les intitulés et leurs valeurs proches les uns des autres. */
+    max-width: 48rem;
+
+    /* Centre le panneau horizontalement. */
+    margin-inline: auto;
+
+    /* Éloigne le contenu des bords du panneau. */
+    padding: var(--space-8);
+
+    /* Applique la surface blanche commune aux panneaux. */
+    background-color: var(--color-surface);
+
+    /* Délimite le panneau. */
+    border: 1px solid var(--color-border);
+
+    /* Reprend l’arrondi commun du site. */
+    border-radius: var(--radius);
+}
+
+.profile-panel__header > h1 {
+    /* Supprime les marges natives du titre. */
+    margin: 0;
+
+    /* Donne au titre la même importance que ceux des pages de compte. */
+    font-size: 2rem;
+
+    /* Ajuste la hauteur des lignes si le titre se répartit. */
+    line-height: 1.2;
+}
+
+.profile-panel__header > p {
+    /* Sépare le texte d’introduction du titre. */
+    margin: var(--space-3) 0 0;
+
+    /* Place l’introduction au second plan visuel. */
+    color: var(--color-muted);
+}
+
+.profile-details {
+    /* Sépare les informations de l’introduction.
+       Supprime les autres marges natives de la liste. */
+    margin: var(--space-6) 0 0;
+}
+
+.profile-details__item {
+    /* Organise chaque paire intitulé/valeur dans une grille. */
+    display: grid;
+
+    /* Première colonne : largeur de 12rem pour les intitulés.
+       Deuxième colonne : occupe l’espace restant. */
+    grid-template-columns: 12rem minmax(0, 1fr);
+
+    /* Espace vertical de 0.5rem et horizontal de 1.5rem. */
+    gap: var(--space-2) var(--space-6);
+
+    /* Ajoute de l’espace au-dessus et au-dessous de chaque paire. */
+    padding-block: var(--space-4);
+}
+
+/* Cible chaque groupe immédiatement précédé par un autre groupe. */
+.profile-details__item + .profile-details__item {
+    /* Ajoute une séparation entre les groupes, sauf avant le premier. */
+    border-top: 1px solid var(--color-border);
+}
+
+.profile-details__item > dt {
+    /* Rend les intitulés suffisamment visibles pour guider la lecture. */
+    font-weight: 600;
+}
+
+.profile-details__item > dd {
+    /* Supprime notamment le retrait gauche appliqué
+       par défaut aux éléments dd. */
+    margin: 0;
+
+    /* Autorise une longue adresse e-mail ou un long nom
+       à revenir à la ligne sans déborder. */
+    overflow-wrap: anywhere;
+}
+
+.profile-role {
+    /* Crée une boîte qui suit la largeur de son texte. */
+    display: inline-block;
+
+    /* Ajoute un peu d’espace autour du rôle. */
+    padding: var(--space-1) var(--space-3);
+
+    /* Réutilise le fond discret des étiquettes. */
+    background-color: var(--color-tag-background);
+
+    /* Reprend la couleur principale. */
+    color: var(--color-primary);
+
+    /* Arrondit légèrement les angles. */
+    border-radius: var(--radius);
+
+    /* Rend l’étiquette compacte. */
+    font-size: 0.875rem;
+
+    /* Met le rôle légèrement en évidence. */
+    font-weight: 600;
+}
+
+.profile-panel__actions {
+    /* Place le lien et le bouton sur une même ligne si possible. */
+    display: flex;
+
+    /* Aligne verticalement les deux actions. */
+    align-items: center;
+
+    /* Utilise l’espace disponible pour les séparer. */
+    justify-content: space-between;
+
+    /* Autorise un retour à la ligne lorsque la largeur manque. */
+    flex-wrap: wrap;
+
+    /* Maintient un espace entre les actions. */
+    gap: var(--space-4);
+
+    /* Sépare cette zone de la liste d’informations. */
+    margin-top: var(--space-6);
+
+    /* Éloigne les actions de la bordure supérieure. */
+    padding-top: var(--space-4);
+
+    /* Délimite la zone d’actions. */
+    border-top: 1px solid var(--color-border);
+}
+
+.site-footer {
+    /* Sépare visuellement le footer du contenu précédent. */
+    border-top: 1px solid var(--color-border);
+
+    /* Reprend le fond blanc du header et des panneaux. */
+    background-color: var(--color-surface);
+
+    /* Ajoute de l’espace intérieur en haut et en bas. */
+    padding-block: var(--space-6);
+
+    /* Donne une couleur discrète aux textes ordinaires du footer. */
+    color: var(--color-muted);
+
+    /* Réduit légèrement leur taille par rapport au contenu principal. */
+    font-size: 0.875rem;
+}
+
+.site-footer__inner {
+    /* Dispose l’identité du site et les crédits sur une même ligne. */
+    display: flex;
+
+    /* Aligne le haut des deux blocs. */
+    align-items: flex-start;
+
+    /* Place les deux blocs aux extrémités de l’espace disponible. */
+    justify-content: space-between;
+
+    /* Autorise les blocs à passer sur plusieurs lignes si nécessaire. */
+    flex-wrap: wrap;
+
+    /* Maintient une séparation entre les blocs et entre les lignes. */
+    gap: var(--space-6) var(--space-8);
+}
+
+.site-footer__brand {
+    /* Donne au nom du site une taille supérieure au texte du footer,
+       mais plus discrète que celle du nom dans le header. */
+    font-size: 1.25rem;
+
+    /* Renforce le nom du projet. */
+    font-weight: 700;
+
+    /* Retire le soulignement permanent de ce lien de marque. */
+    text-decoration: none;
+}
+
+.site-footer__identity > p {
+    /* Sépare la devise du nom du site,
+       sans conserver les marges natives du paragraphe. */
+    margin: var(--space-2) 0 0;
+}
+
+.site-footer__credits {
+    /* Empêche une ligne de noms trop longue sur les grands écrans. */
+    max-width: 34rem;
+
+    /* Autorise le bloc à rétrécir dans son conteneur Flexbox. */
+    min-width: 0;
+}
+
+.site-footer__label {
+    /* Supprime les marges natives du paragraphe. */
+    margin: 0;
+
+    /* Renforce légèrement l’intitulé des crédits. */
+    font-weight: 600;
+
+    /* Utilise la couleur principale du texte pour cet intitulé. */
+    color: var(--color-text);
+}
+
+.site-footer__authors {
+    /* Dispose les noms les uns à côté des autres. */
+    display: flex;
+
+    /* Autorise les noms à passer sur plusieurs lignes. */
+    flex-wrap: wrap;
+
+    /* Définit l’espace entre les lignes, puis entre les noms. */
+    gap: var(--space-2) var(--space-4);
+
+    /* Sépare la liste de son intitulé. */
+    margin: var(--space-2) 0 0;
+
+    /* Supprime le retrait natif de la liste. */
+    padding: 0;
+
+    /* Retire les puces. */
+    list-style: none;
+}
+
+.site-footer__authors > li {
+    /* Permet à un nom exceptionnellement long de revenir à la ligne
+       plutôt que de déborder de la page. */
+    overflow-wrap: anywhere;
+}
+
+.site-footer__copyright {
+    /* Sépare la dernière ligne de la liste des auteurs. */
+    margin: var(--space-4) 0 0;
+}
+
+.error-page {
+    /* Utilise la largeur disponible sur petit écran. */
+    width: 100%;
+
+    /* Limite la largeur pour garder une lecture confortable. */
+    max-width: 46rem;
+
+    /* Centre horizontalement le panneau. */
+    margin-inline: auto;
+
+    /* Éloigne son contenu des bords. */
+    padding: var(--space-8);
+
+    /* Applique la surface blanche commune aux pages. */
+    background-color: var(--color-surface);
+
+    /* Délimite le panneau sans effet visuel excessif. */
+    border: 1px solid var(--color-border);
+
+    /* Reprend les arrondis du site. */
+    border-radius: var(--radius);
+}
+
+.error-page__code {
+    /* Supprime les marges natives du paragraphe. */
+    margin: 0;
+
+    /* Utilise l’accent terracotta pour identifier l’erreur. */
+    color: var(--color-accent);
+
+    /* Renforce la présence du code sans en faire le titre principal. */
+    font-weight: 700;
+
+    /* Rend cette information légèrement plus petite que le texte courant. */
+    font-size: 0.875rem;
+}
+
+.error-page__title {
+    /* Sépare le titre du code d’erreur. */
+    margin: var(--space-2) 0 0;
+
+    /* Adapte la taille du titre à la fenêtre,
+       entre un minimum de 1.75rem et un maximum de 2.5rem. */
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+
+    /* Préserve une présentation compacte sur plusieurs lignes. */
+    line-height: 1.2;
+
+    /* Évite qu’un mot exceptionnellement long déborde du panneau. */
+    overflow-wrap: anywhere;
+}
+
+.error-page__intro {
+    /* Sépare l’explication générale du titre. */
+    margin: var(--space-4) 0 0;
+
+    /* Donne moins de poids visuel à l’introduction qu’au titre. */
+    color: var(--color-muted);
+}
+
+.error-page__login {
+    /* Sépare l’action de connexion de l’introduction de la page 401. */
+    margin: var(--space-6) 0 0;
+}
+
+/* Les règles à l’intérieur s’appliquent uniquement
+   lorsque la largeur du viewport est au plus de 48rem. */
+@media (max-width: 48rem) {
+    .site-nav {
+        /* La navigation occupe toute la largeur du conteneur.
+           Avec flex-wrap sur le parent, elle passe sous Forum. */
+        width: 100%;
+    }
+
+    .site-nav__list {
+        /* Réduit l’espace horizontal entre les liens.
+           L’espace entre les lignes reste identique. */
+        gap: var(--space-2) var(--space-3);
+    }
+}
+
+/* Première adaptation : les deux colonnes deviennent une seule. */
+@media (max-width: 60rem) {
+    .questions-layout {
+        /* Les deux blocs occupent successivement toute la colonne. */
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Deuxième adaptation : réduction des espacements sur écran étroit. */
+@media (max-width: 40rem) {
+    .page-content {
+        /* Réduit l’espace vertical autour du contenu principal. */
+        padding-block: var(--space-6);
+    }
+
+    /* Les virgules appliquent la même déclaration aux quatre classes. */
+    .questions-panel__header,
+    .question,
+    .help-panel,
+    .empty-state {
+        /* Préserve davantage de largeur disponible pour le texte. */
+        padding: var(--space-4);
+    }
+
+    .questions-panel__header > .button {
+        /* Donne toute la largeur disponible à l’action principale. */
+        width: 100%;
+    }
+}
+
+@media (max-width: 40rem) {
+    .auth-panel {
+        /* Réduit l’espace intérieur pour préserver la largeur des champs. */
+        padding: var(--space-6);
+    }
+}
+
+@media (max-width: 40rem) {
+    .form-actions > .button {
+        /* Sur petit écran, donne toute la largeur au bouton principal. */
+        width: 100%;
+    }
+}
+
+@media (max-width: 40rem) {
+    .profile-panel {
+        /* Réduit l’espace intérieur sur les écrans étroits. */
+        padding: var(--space-6);
+    }
+
+    .profile-details__item {
+        /* Place chaque valeur sous son intitulé. */
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .profile-panel__actions > .button {
+        /* Donne toute la largeur disponible à l’action principale. */
+        width: 100%;
+    }
+}
+
+@media (max-width: 40rem) {
+    .site-footer__inner {
+        /* Place le bloc d’identité au-dessus des crédits. */
+        flex-direction: column;
+    }
+
+    .site-footer__authors {
+        /* Présente un auteur par ligne pour une lecture plus simple. */
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 40rem) {
+    .error-page {
+        /* Réduit l’espace intérieur du panneau principal. */
+        padding: var(--space-6);
+    }
+
+    .error-details {
+        /* Réduit le second niveau d’espacement,
+           pour préserver suffisamment de largeur au texte. */
+        padding: var(--space-4);
+    }
+
+    .error-details__actions > .button,
+    .error-page__login > .button {
+        /* Donne une ligne entière à chaque action. */
+        width: 100%;
+    }
+}

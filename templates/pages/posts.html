@@ -2,85 +2,58 @@
 <html lang="fr">
 {{template "head"}}
 <body>
-{{template "header"}}
-    <div class="container">
-        {{if gt (len .Posts) 1}}
-        <h2>Publications du forum</h2>
-        {{end}}
-        {{if eq (len .Posts) 0}}
-            <p class="no-posts">Aucun post pour l'instant...</p>
-        {{else}}
-        <article>
-            <h2>{{(index .Posts 0).Title}}</h2>
-            <div class="post-title">
-                Publié par <strong>{{(index .Posts 0).Username}}</strong>
-            </div>
-            <div>
-                {{(index .Posts 0).Content}}
-            </div>
-            {{if (index .Posts 0).Categories}}
-            <div>
-                {{range (index .Posts 0).Categories}}
-                <span class="tag">{{.}}</span>
+{{template "header" .Auth}}
+
+    <main class="container page-content">
+        <div class="page-intro">
+            <h1>L’entraide avant tout.</h1>
+            <p>Un problème de code ? Cherchons la solution ensemble.</p>
+        </div>
+
+        <section class="questions-panel" aria-labelledby="questions-title">
+            <div class="questions-panel__header">
+                <h2 id="questions-title">Questions de la communauté</h2>
+
+                {{if .Auth.IsActive}}
+                    <a class="button" href="/create-post">Poser une question</a>
+                {{else}}
+                    <a class="button" href="/login">
+                        Se connecter pour participer
+                    </a>
                 {{end}}
             </div>
-            {{end}}
-            <!-- <div class="reactions">
-                <span class="like">👍 0</span>
-                <span class="dislike">👎 0</span>
-            </div> -->
-            <div class="date">
-                Publié le {{(index .Posts 0).CreatedAt.Format "02/01/2006 à 15:04"}}
-            </div>
-        </article>
-        {{end}}
-        {{if gt (len .Posts) 1}}
-            {{range (slice .Posts 1)}}
-            <article>
-                <div class="post-title">{{.Title}}</div>
-                <div>
-                    Publié par <strong>{{.Username}}</strong>
-                </div>
-                <div>
-                    {{.Content}}
-                </div>
-                {{if .Categories}}
-                <div>
-                    {{range .Categories}}
-                    <span>{{.}}</span>
+
+            {{range .Posts}}
+                <article class="question">
+                    <h3 class="question__title">
+                        <a href="/posts/{{.ID}}">{{.Title}}</a>
+                    </h3>
+
+                    <p class="question__content">{{.Content}}</p>
+
+                    {{if .Categories}}
+                        <ul class="question__tags">
+                            {{range .Categories}}
+                                <li class="tag">{{.}}</li>
+                            {{end}}
+                        </ul>
                     {{end}}
+
+                    <p class="question__meta">
+                        Publié par <strong>{{.Username}}</strong> le
+                        <time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
+                            {{.CreatedAt.Format "02/01/2006 à 15:04"}}
+                        </time>
+                    </p>
+                </article>
+            {{else}}
+                <div class="empty-state">
+                    <h3>La première question reste à poser.</h3>
+                    <p>Un blocage, une interrogation ? Lance la discussion avec la communauté.</p>
                 </div>
-                {{end}}
-                <!-- <div class="reactions">
-                    <span class="like">👍 0</span>
-                    <span class="like">👎 0</span>
-                </div> -->
-                <div class="date">
-                    Publié le {{.CreatedAt.Format "02/01/2006 à 15:04"}}
-                </div>
-            </article>
             {{end}}
-        {{else}}
-            {{ if or (eq .Comments nil) (eq (len .Comments) 0) }}
-            <div class="no-comments">
-                <p>Aucun commentaire trouvé. Sois le premier à commenter!</p>
-            </div>
-            {{ else }}
-                {{ range .Comments }}
-                <div class="comment">
-                    <div class="comment-username">{{.Username}}</h4>
-                    <div class="comment-content">{{.Content}}</p>
-                    <div class="comment-date">{{.CreatedAt.Format "02/01/2006 à 15:04"}}</p>
-                </div>
-                {{ end }}
-            {{ end }}
-            <form method="POST" action="/create-comment">
-                <input type="hidden" name="post_id" value="{{ (index .Posts 0).ID}}" />
-                <label id="comment">Ton commentaire</label><textarea id="comment" placeholder="Tout le monde s'en fout de ton com' t'façon..." name="comment" rows="4" cols="80"></textarea>
-                <button type="submit">Envoyer</button>
-            </form>
-        {{end}}
-    </div>
+        </section>
+    </main>
     {{template "footer"}}
 </body>
 </html>

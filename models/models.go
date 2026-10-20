@@ -1,6 +1,7 @@
 package models
 
 import (
+	"forum/session"
 	"time"
 )
 
@@ -32,7 +33,24 @@ type Comment struct {
 	CreatedAt time.Time
 }
 
-type PostsData struct {
-	Posts    []Post
+type PostsPageData struct {
+	Auth  session.Authentified
+	Posts []Post
+}
+
+type PostPageData struct {
+	Auth     session.Authentified
+	Post     Post
 	Comments []Comment
 }
+
+type PageData struct {
+	Auth    session.Authentified
+	Profile User
+}
+
+// type PageData struct {
+// 	Auth    session.Authentified
+// 	Posts   []Post
+// 	Profile User
+// }

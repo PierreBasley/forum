@@ -1,13 +1,30 @@
 {{define "footer"}}
-<hr>
-<footer>
-    <p>Projet Forum par:</p>
-    <ul>
-        <li>Pierre BASLEY</li>
-        <li>Abdou CHERIF HONO DIGO</li>
-        <li>Yohann FEDAOUI</li>
-        <li>Hicham HEE</li>
-    </ul>
-    <p>© 2026 Forum par Zone01</p>
+<!-- Pied de page commun au site. -->
+<footer class="site-footer">
+
+    <!-- Reprend le même alignement horizontal que le header
+         et le contenu principal. -->
+    <div class="container site-footer__inner">
+
+        <div class="site-footer__identity">
+            <a class="site-footer__brand" href="/">Forum</a>
+            <p>L’entraide avant tout.</p>
+        </div>
+
+        <!-- Regroupe les crédits du projet. -->
+        <div class="site-footer__credits">
+            <p class="site-footer__label">Un projet réalisé par</p>
+
+            <ul class="site-footer__authors">
+                <li>Pierre BASLEY</li>
+                <li>Abdou CHERIF HONO DIGO</li>
+                <li>Yohann FEDAOUI</li>
+                <li>Hicham HEE</li>
+            </ul>
+
+            <p class="site-footer__copyright">© 2026 Forum — Projet réalisé à Zone01</p>
+        </div>
+    </div>
 </footer>
+
 {{end}}

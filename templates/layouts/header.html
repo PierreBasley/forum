@@ -1,17 +1,20 @@
 {{define "header"}}
-<header>
-    <h1><a href="/">Forum</a></h1>
-    <nav>
-        <ul>
-            <li><a href="/login">Se connecter</a></li>
-            <li><a href="/register">Créer un compte</a></li>
-            <li><a href="/create-post">Créer un post</a></li>
-            <li><a href="/posts">Voir les posts</a></li>
-            <li><a href="/logout">Se déconnecter</a></li>
-            <li><a href="/profile">Mon profil</a></li>
+<header class=""site-header>
+    <div class="container site-header__inner">
+    <a class="site-brand" href="/">Forum</a>
+    <nav class="site-nav">
+        <ul class="site-nav__list">
+            <li><a class="site-nav__link" href="/posts">Voir les posts</a></li>
+            {{if .IsActive}}
+            <li><a class="site-nav__link" href="/profile">Mon profil</a></li>
+            <li><a class="site-nav__link" href="/logout">Se déconnecter</a></li>
+            <li><a class="button" href="/create-post">Créer un post</a></li>
+            {{else}}
+            <li><a class="site-nav__link" href="/login">Se connecter</a></li>
+            <li><a class="button button--outline" href="/register">Créer un compte</a></li>
+            {{end}}
         </ul>
     </nav>
+</div>
 </header>
-<hr>
 {{end}}
-

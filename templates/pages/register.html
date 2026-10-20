@@ -1,48 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 {{template "head"}}
 <body>
-{{template "header"}}
-    <h2>Créer un compte</h2>
-    <form action="/register" method="POST">
-            <label for="register-name">Nom :</label>
-            <br>
-            <input
-                type="text"
-                id="register-name"
-                name="username"
-                required
-            >
-            <br>
-            <label for="register-email">Email :</label>
-            <br>
-            <input
-                type="email"
-                id="register-email"
-                name="email"
-                required
-            >
-            <br>
-            <label for="register-password">Mot de passe :</label>
-            <br>
-            <input
-                type="password"
-                id="register-password"
-                name="password"
-                required
-            >
-            <br>
-            <label for="register-password-confirm">Confirmer le mot de passe :</label>
-            <br>
-            <input
-                type="password"
-                id="register-password-confirm"
-                name="password_confirm"
-                required
-            >
-            <br>
-        <button type="submit">Créer un compte</button>
-    </form>
+{{template "header" .Auth}}
+    <!-- Reprend la largeur et les espacements communs aux pages. -->
+    <main class="container page-content">
+
+        <!-- Réutilise le panneau blanc centré de la connexion. -->
+        <section class="auth-panel" aria-labelledby="register-title">
+            <div class="auth-panel__intro">
+                <h1 id="register-title">Créer un compte</h1>
+                <p>Rejoins la communauté pour poser tes questions et partager tes connaissances.</p>
+            </div>
+
+            <!-- La destination et les noms des champs correspondent
+                 à ceux de votre formulaire d’inscription existant. -->
+            <form class="form" action="/register" method="POST">
+
+                <div class="form-field">
+                    <label for="register-name">Nom d’utilisateur</label>
+                    <input
+                        type="text"
+                        id="register-name"
+                        name="username"
+                        aria-describedby="register-name-help"
+                        required
+                    >
+                    <!-- Information complémentaire associée au champ. -->
+                    <p class="form-field__help" id="register-name-help">Ce nom apparaîtra sur tes publications.</p>
+                </div>
+
+                <div class="form-field">
+                    <label for="register-email">Adresse e-mail</label>
+                    <input
+                        type="email"
+                        id="register-email"
+                        name="email"
+                        required
+                    >
+                </div>
+
+                <div class="form-field">
+                    <label for="register-password">Mot de passe</label>
+                    <input
+                        type="password"
+                        id="register-password"
+                        name="password"
+                        required
+                    >
+                </div>
+
+                <div class="form-field">
+                    <label for="register-password-confirm">Confirmer le mot de passe</label>
+                    <input
+                        type="password"
+                        id="register-password-confirm"
+                        name="password_confirm"
+                        required
+                    >
+                </div>
+
+                <button class="button form__submit" type="submit">
+                    Créer mon compte
+                </button>
+            </form>
+            <p class="auth-panel__alternative">Déjà un compte ? <a href="/login">Se connecter</a></p>
+        </section>
+    </main>
 {{template "footer"}}
 </body>
 </html>

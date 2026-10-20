@@ -3,6 +3,8 @@ package session
 import (
 	"encoding/json"
 	"errors"
+	"forum/login"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,6 +27,11 @@ type Session struct {
 type Manager struct {
 	mu  sync.RWMutex //coordoninate the RW operation on the files.
 	dir string
+}
+
+type Authentified struct {
+	IsActive bool
+	Session  Session
 }
 
 // NewManager create a manager ready to manage session and files operation.
@@ -141,6 +148,23 @@ func (m *Manager) RechercheSession(sessionID string) (Session, bool, error) {
 		return Session{}, false, nil
 	}
 	return s, true, nil
+}
+
+func (m *Manager) IsSessionActive(r *http.Request, cookieName string) (Session, bool, error) {
+	sessionID, err := login.GetSessionCookie(r, cookieName)
+	if err != nil {
+		return Session{}, false, nil
+	}
+
+	session, ok, err := m.RechercheSession(sessionID)
+	if err != nil {
+		return Session{}, false, err
+	}
+	if ok == false {
+		return Session{}, false, nil
+	}
+
+	return session, true, nil
 }
 
 func (m *Manager) SuppressionSession(sessionID string) error {
