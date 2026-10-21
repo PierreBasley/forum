@@ -669,6 +669,113 @@ func ReadPost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	}
 }
 
+func Comment(db *sql.DB, m *session.Manager) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			// Checking that all needed data was provided
+			if r.FormValue("post_id") == "" {
+				renderError(w, 400, &ErrorDetails{Error: errors.New("Aucun ID de post n'a été fourni"), AllowedMethods: nil})
+				return
+			}
+			// !!!: Right now, content isn't validated so major XSS flaws
+			// might arise (even when filtered with Go templates)
+			// In the future (and in a real-life project), this should be done
+			// both input- and output-side (output is handled by templates)
+			content := r.FormValue("content")
+			if content == "" {
+				renderError(w, 400, &ErrorDetails{Error: errors.New("Commentaire vide"), AllowedMethods: nil})
+				return
+			}
+			// Check that the user is logged in
+			sessionCookie, err := r.Cookie(COOKIE_NAME)
+			if err != nil {
+				if err == http.ErrNoCookie {
+					http.Redirect(w, r, "/login", http.StatusSeeOther)
+					return
+				}
+				log.Println(`Erreur de parsing du cookie de session pendant l'ajout d'un commentaire\n
+				L'utilisateur n'a pas pu être authentifié`, err)
+				renderError(w, 500, nil)
+				return
+			}
+			userSession, validSession, err := m.RechercheSession(sessionCookie.Value)
+			if err != nil {
+				log.Println("Session invalide:", err)
+				renderError(w, 500, nil)
+				return
+			}
+			if !validSession {
+				http.Redirect(w, r, "/login", http.StatusSeeOther)
+				return
+			}
+			rows, err := db.Query(`
+			SELECT id
+			FROM users
+			WHERE id = ?
+			`, userSession.UserID)
+			if err != nil {
+				log.Println("erreur de requêtage sur le post pendant la création d'un commentaire:", err)
+				renderError(w, 500, nil)
+				return
+			}
+			rows.Next()
+			returnedUserID := ""
+			err = rows.Scan(&returnedUserID)
+			if err != nil {
+				log.Println("Session invalide contenant un utilisateur non-existant au moment de la requête, erreur de scan:", err.Error())
+				renderError(w, 400, &ErrorDetails{Error: errors.New("session invalide"), AllowedMethods: nil})
+				return
+			}
+			rows.Close()
+
+			// Check that the post exists
+			rows, err = db.Query(`
+			SELECT id
+			FROM posts
+			WHERE id = ?
+			`, r.FormValue("post_id"))
+			if err != nil {
+				log.Println("erreur de requêtage sur le post pendant la création d'un commentaire:", err)
+				renderError(w, 500, nil)
+				return
+			}
+			rows.Next()
+			postID := ""
+			if err = rows.Scan(&postID); err != nil {
+				log.Println("erreur de requêtage sur le post pendant la création d'un commentaire, scanning de post_id:", err)
+				renderError(w, 500, nil)
+				return
+			}
+			rows.Close()
+
+			// Insert the post
+			generated, err := uuid.NewV4()
+			if err != nil {
+				log.Println("erreur de requêtage sur le post pendant la création d'un commentaire, nouveau UUID:", err)
+				renderError(w, 500, nil)
+				return
+			}
+			newID := generated.String()
+			_, err = db.Exec(`
+			INSERT INTO comments (id, post_id, user_id, content, created_at)
+			VALUES (?, ?, ?, ?, datetime('now'))
+			`, newID, postID, returnedUserID, content, time.Now())
+			if err != nil {
+				log.Println("erreur d'insertion de commentaire,", err)
+				renderError(w, 500, nil)
+				return
+			}
+			rows.Close()
+			http.Redirect(w, r, "/posts/" + postID, http.StatusFound)
+		} else if r.Method == http.MethodPut {
+			// this is where we handle the comment modifying logic
+		} else {
+			renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"POST", "PUT"}})
+			return
+		}
+	}
+}
+
 func ForgotPasswordHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 

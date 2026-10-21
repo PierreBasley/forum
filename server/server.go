@@ -11,6 +11,7 @@ func StartHTTPServer(db *sql.DB, m *session.Manager) {
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
+	http.HandleFunc("/comment", Comment(db, m))
 	http.HandleFunc("/", Index(db, m))
 	http.HandleFunc("/login", LoginHandler(db, m))
 	http.HandleFunc("/forgot-password", ForgotPasswordHandler(db, m))
