@@ -28,9 +28,14 @@ type Post struct {
 }
 
 type Comment struct {
-	Username  string
-	Content   string
-	CreatedAt time.Time
+	ID            string
+	Username      string
+	Content       string
+	CreatedAt     time.Time
+	LikesCount    int
+	LikedByMe     bool
+	DislikesCount int
+	DislikedByMe  bool
 }
 
 type PostsPageData struct {

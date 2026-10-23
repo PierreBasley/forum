@@ -26,39 +26,120 @@
                     {{end}}
                 </ul>
             {{end}}
+            <div class="post-reactions">
+            {{if .Auth.IsActive}}
+                <form action="/like" method="POST" class="post-reactions__form">
+                <input type="hidden" name="target_type" value="post">
+                <input type="hidden" name="target_id" value="{{.Post.ID}}">
+                    <button
+                    type="submit"
+                    name="reaction"
+                    value="like"
+                    class="reaction-button"
+                    aria-pressed="{{.Post.LikedByMe}}"
+                    >J’aime ({{.Post.LikesCount}})</button>
+                    <button
+                    type="submit"
+                    name="reaction"
+                    value="dislike"
+                    class="reaction-button"
+                    aria-pressed="{{.Post.DislikedByMe}}"
+                    >Je n’aime pas ({{.Post.DislikesCount}})</button>
+                </form>
+            {{else}}
+                <p class="post-reactions__counts">J’aime : {{.Post.LikesCount}}
+                · Je n’aime pas : {{.Post.DislikesCount}}</p>
+                <p><a href="/login">Connectez-vous pour voter</a></p>
+            {{end}}
+            </div>
         </article>
 
-        <section class="questions-panel" aria-labelledby="comments-title">
-            <div class="questions-panel__header">
-                <h2 id="comments-title">Commentaires ({{len .Comments}})</h2>
-            </div>
+        <section class="comments-panel" aria-labelledby="comments-title">
+    <div class="comments-panel__header">
+        <h2 id="comments-title">Réponses ({{len .Comments}})</h2>
+    </div>
 
-            {{range .Comments}}
-                <article class="question">
-                    <h3 class="question__title">Commentaire de {{.Username}}</h3>
+    <div class="comments-list">
+        {{range .Comments}}
+            <article class="comment">
+                <h3 class="comment__author">Réponse de {{.Username}}</h3>
 
-                    <p class="question__meta">
-                        Publié le
-                        <time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
-                            {{.CreatedAt.Format "02/01/2006 à 15:04"}}
-                        </time>
+                <p class="comment__meta">
+                    Publiée le
+                    <time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
+                        {{.CreatedAt.Format "02/01/2006 à 15:04"}}
+                    </time>
+                </p>
+
+                <p class="comment__content">{{.Content}}</p>
+                <div class="post-reactions">
+                {{if $.Auth.IsActive}}
+                    <form action="/like" method="POST" class="post-reactions__form">
+                        <input type="hidden" name="target_type" value="comment">
+                        <input type="hidden" name="target_id" value="{{.ID}}">
+
+                        <button
+                            type="submit"
+                            name="reaction"
+                            value="like"
+                            class="reaction-button"
+                            aria-pressed="{{.LikedByMe}}"
+                        >J’aime ({{.LikesCount}})</button>
+                        <button
+                            type="submit"
+                            name="reaction"
+                            value="dislike"
+                            class="reaction-button"
+                            aria-pressed="{{.DislikedByMe}}"
+                        >Je n’aime pas ({{.DislikesCount}})</button>
+                    </form>
+                {{else}}
+                    <p class="post-reactions__counts">
+                        J’aime : {{.LikesCount}}
+                        · Je n’aime pas : {{.DislikesCount}}
                     </p>
+                    <p>
+                        <a href="/login">Connectez-vous pour voter</a>
+                    </p>
+                {{end}}
+</div>
+            </article>
+        {{else}}
+            <div class="comments-empty">
+                <p>Cette publication n’a pas encore de réponse.</p>
+            </div>
+        {{end}}
+    </div>
 
-                    <p class="question__content">{{.Content}}</p>
-                </article>
-            {{else}}
-                <div class="empty-state">
-                    <p>Cette publication n’a pas encore de commentaire.</p>
+    <section class="comment-compose" aria-labelledby="comment-form-title">
+        <h3 id="comment-form-title">Vous souhaitez répondre ?</h3>
+
+        {{if .Auth.IsActive}}
+            <form action="/comment" method="POST" class="comment-form">
+                <input type="hidden" name="post_id" value="{{.Post.ID}}">
+
+                <div class="comment-form__field">
+                    <label for="comment-content">Votre réponse :</label>
+
+                    <textarea
+                        id="comment-content"
+                        name="content"
+                        rows="7"
+                        required
+                        aria-describedby="comment-content-help"
+                    ></textarea>
+
+                    <p id="comment-content-help" class="comment-form__help">Expliquez votre proposition et donnez les précisions utiles.</p>
                 </div>
-            {{end}}
-            <form action="/comment" method="POST">
-                <input type="hidden" name="post_id" value="{{ .Post.ID }}">
-                <label for="content">Ton commentaire :</label><br>
-                <textarea id="content" name="content" required></textarea><br><br>
-                <button type="submit">Envoyer</button>
+
+                <button type="submit" class="button">Publier la réponse</button>
             </form>
-        </section>
-    </main>
+        {{else}}
+            <p><a href="/login">Connectez-vous</a> pour publier une réponse.</p>
+        {{end}}
+    </section>
+</section>
+</main>
 
     {{template "footer"}}
 </body>

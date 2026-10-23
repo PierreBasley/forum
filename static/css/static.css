@@ -1251,6 +1251,191 @@ Les doubles traits de soulignement sont une convention de nommage indiquant "él
     margin: var(--space-6) 0 0;
 }
 
+/* Sépare les réactions du contenu de la publication. */
+.post-reactions {
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+/* Dispose les boutons côte à côte.
+   Ils passent à la ligne si l'espace disponible est insuffisant. */
+.post-reactions__form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+/* Apparence commune aux deux boutons de vote. */
+.reaction-button {
+    min-height: 44px;
+    padding: var(--space-2) var(--space-4);
+
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius);
+
+    background-color: var(--color-surface);
+    color: var(--color-text);
+
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Le survol indique que le bouton est interactif. */
+.reaction-button:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-tag-background);
+}
+
+/* Le vote sélectionné est identifié par son attribut HTML.
+   Aucune classe supplémentaire ni JavaScript n'est nécessaire. */
+.reaction-button[aria-pressed="true"] {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+
+    /* Ajoute une différence autre que la couleur. */
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+
+/* Maintient un état distinct lors du survol du vote sélectionné. */
+.reaction-button[aria-pressed="true"]:hover {
+    border-color: var(--color-primary-hover);
+    background-color: var(--color-primary-hover);
+}
+
+/* Présentation des compteurs pour les visiteurs déconnectés. */
+.post-reactions__counts {
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Espacement des textes d'accompagnement du bloc. */
+.post-reactions > p {
+    margin-top: var(--space-3);
+    margin-bottom: 0;
+}
+
+.post-reactions > p:first-child {
+    margin-top: 0;
+}
+
+/* Panneau regroupant les réponses et le formulaire. */
+.comments-panel {
+    margin-top: var(--space-8);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background-color: var(--color-surface);
+}
+
+/* Titre général de la section. */
+.comments-panel__header {
+    padding: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.comments-panel__header > h2 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+/* Chaque réponse possède ses propres espacements. */
+.comment {
+    padding: var(--space-6);
+}
+
+/* Sépare deux réponses consécutives. */
+.comment + .comment {
+    border-top: 1px solid var(--color-border);
+}
+
+.comment__author {
+    margin: 0;
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+}
+
+.comment__meta {
+    margin: var(--space-1) 0 0;
+    color: var(--color-muted);
+    font-size: 0.875rem;
+}
+
+.comment__content {
+    margin: var(--space-4) 0 0;
+
+    /* Conserve les retours à la ligne saisis par l'utilisateur. */
+    white-space: pre-wrap;
+
+    /* Évite qu'un mot ou une URL très longue déborde. */
+    overflow-wrap: anywhere;
+}
+
+/* Message affiché lorsqu'aucune réponse n'existe. */
+.comments-empty {
+    padding: var(--space-6);
+    color: var(--color-muted);
+}
+
+.comments-empty > p {
+    margin: 0;
+}
+
+/* Distingue l'espace de rédaction des réponses déjà publiées. */
+.comment-compose {
+    padding: var(--space-6);
+    border-top: 1px solid var(--color-border);
+    border-radius: 0 0 var(--radius) var(--radius);
+    background-color: var(--color-background);
+}
+
+.comment-compose > h3 {
+    margin: 0 0 var(--space-4);
+    font-size: 1.125rem;
+}
+
+/* Organise verticalement le champ et le bouton. */
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+}
+
+.comment-form__field {
+    width: 100%;
+}
+
+.comment-form__field > label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-weight: 600;
+}
+
+.comment-form__field > textarea {
+    display: block;
+    width: 100%;
+    min-height: 10rem;
+    padding: var(--space-3);
+
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    line-height: 1.6;
+
+    /* Autorise l'agrandissement sans élargir le formulaire. */
+    resize: vertical;
+}
+
+.comment-form__help {
+    margin: var(--space-2) 0 0;
+    color: var(--color-muted);
+    font-size: 0.875rem;
+}
+
 /* Les règles à l’intérieur s’appliquent uniquement
    lorsque la largeur du viewport est au plus de 48rem. */
 @media (max-width: 48rem) {
@@ -1355,6 +1540,20 @@ Les doubles traits de soulignement sont une convention de nommage indiquant "él
     .error-details__actions > .button,
     .error-page__login > .button {
         /* Donne une ligne entière à chaque action. */
+        width: 100%;
+    }
+}
+
+/* Réduit les espacements sur les écrans étroits. */
+@media (max-width: 40rem) {
+    .comments-panel__header,
+    .comment,
+    .comments-empty,
+    .comment-compose {
+        padding: var(--space-4);
+    }
+
+    .comment-form > .button {
         width: 100%;
     }
 }

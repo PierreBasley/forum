@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS roles (
 );
 
 INSERT INTO roles(name) VALUES
-('visitor'),
 ('user'),
 ('moderator'),
 ('admin')

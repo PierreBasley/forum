@@ -570,7 +570,6 @@ func ReadPost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			renderError(w, 404, nil)
 			return
 		}
-
 		if err != nil {
 			log.Println("Erreur de récupération de la publication :", err)
 			renderError(w, 500, nil)
@@ -588,16 +587,71 @@ func ReadPost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			post.Categories = strings.Split(categoryText, ",")
 		}
 
+		userData := session.Authentified{}
+		userID := ""
+		userSession, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+		if err != nil {
+			log.Println("Erreur de vérification de la session :", err)
+			renderError(w, 500, nil)
+			return
+		}
+		if ok == true {
+			userData = session.Authentified{IsActive: ok}
+			userID = userSession.UserID
+			userReact := ""
+
+			err = db.QueryRow(`
+			SELECT reaction
+			FROM likes
+			WHERE user_id = ? AND post_id = ?
+			`, userID, post.ID).Scan(&userReact)
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				log.Println("Erreur dans la réaction de l'utilisateur:", err)
+				renderError(w, 500, nil)
+				return
+			}
+			if userReact == "like" {
+				post.LikedByMe = true
+				post.DislikedByMe = false
+			}
+			if userReact == "dislike" {
+				post.DislikedByMe = true
+				post.LikedByMe = false
+			}
+		}
+
 		rows, err := db.Query(`
 		SELECT
+			comments.id,
 			users.username,
 			comments.content,
-			comments.created_at
+			comments.created_at,
+			(
+				SELECT COUNT(*)
+				FROM comment_likes
+				WHERE comment_likes.comment_id = comments.id
+				AND comment_likes.reaction = 'like'
+			) AS likes_count,
+			(
+				SELECT COUNT(*)
+				FROM comment_likes
+				WHERE comment_likes.comment_id = comments.id
+				AND comment_likes.reaction = 'dislike'
+			) AS dislikes_count,
+			COALESCE(
+				(
+					SELECT reaction
+					FROM comment_likes
+					WHERE comment_likes.comment_id = comments.id
+					AND comment_likes.user_id = ?
+				),
+				''
+			) AS my_reaction
 		FROM comments
 		JOIN users ON users.id = comments.user_id
 		WHERE comments.post_id = ?
-		ORDER BY comments.created_at DESC, comments.id ASC
-		`, post.ID)
+		ORDER BY comments.created_at ASC, comments.id ASC
+		`, userID, post.ID)
 		if err != nil {
 			log.Println("Erreur de récupération des commentaires :", err)
 			renderError(w, 500, nil)
@@ -610,11 +664,16 @@ func ReadPost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 		for rows.Next() {
 			var comment models.Comment
 			var commentDateText string
+			var commentReaction string
 
 			err := rows.Scan(
+				&comment.ID,
 				&comment.Username,
 				&comment.Content,
 				&commentDateText,
+				&comment.LikesCount,
+				&comment.DislikesCount,
+				&commentReaction,
 			)
 			if err != nil {
 				log.Println("Erreur de lecture d'un commentaire :", err)
@@ -629,6 +688,9 @@ func ReadPost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				return
 			}
 
+			comment.LikedByMe = commentReaction == "like"
+			comment.DislikedByMe = commentReaction == "dislike"
+
 			comments = append(comments, comment)
 		}
 
@@ -638,14 +700,28 @@ func ReadPost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			renderError(w, 500, nil)
 			return
 		}
-		_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+
+		err = db.QueryRow(`
+		SELECT COUNT(*)
+			FROM likes
+			WHERE post_id = ? and reaction = ?
+		`, post.ID, "like").Scan(&post.LikesCount)
 		if err != nil {
-			log.Println("Erreur de vérification de la session :", err)
+			log.Println("Erreur dans la lecture  dans le comptage de likes:", err)
 			renderError(w, 500, nil)
 			return
 		}
 
-		userData := session.Authentified{IsActive: ok}
+		err = db.QueryRow(`
+		SELECT COUNT(*)
+			FROM likes
+			WHERE post_id = ? and reaction = ?
+		`, post.ID, "dislike").Scan(&post.DislikesCount)
+		if err != nil {
+			log.Println("Erreur dans la lecture  dans le comptage de dislikes:", err)
+			renderError(w, 500, nil)
+			return
+		}
 
 		pageData := models.PostPageData{
 			Auth:     userData,
@@ -681,12 +757,14 @@ func Comment(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			// might arise (even when filtered with Go templates)
 			// In the future (and in a real-life project), this should be done
 			// both input- and output-side (output is handled by templates)
+			//PB : TODO seeing that with YF, putting a limit to the lenght of the comment
 			content := r.FormValue("content")
 			if content == "" {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Commentaire vide"), AllowedMethods: nil})
 				return
 			}
 			// Check that the user is logged in
+			//Maybe use the function isSessionActive instead ? it's refactoring
 			sessionCookie, err := r.Cookie(COOKIE_NAME)
 			if err != nil {
 				if err == http.ErrNoCookie {
@@ -708,6 +786,7 @@ func Comment(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				http.Redirect(w, r, "/login", http.StatusSeeOther)
 				return
 			}
+
 			rows, err := db.Query(`
 			SELECT id
 			FROM users
@@ -748,7 +827,7 @@ func Comment(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			}
 			rows.Close()
 
-			// Insert the post
+			// Insert the comment
 			generated, err := uuid.NewV4()
 			if err != nil {
 				log.Println("erreur de requêtage sur le post pendant la création d'un commentaire, nouveau UUID:", err)
@@ -766,7 +845,7 @@ func Comment(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				return
 			}
 			rows.Close()
-			http.Redirect(w, r, "/posts/" + postID, http.StatusFound)
+			http.Redirect(w, r, "/posts/"+postID, http.StatusFound)
 		} else if r.Method == http.MethodPut {
 			// this is where we handle the comment modifying logic
 		} else {
@@ -932,7 +1011,7 @@ func ResetPasswordHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	}
 }
 
-// LikeHandler ajoute, retire ou remplace la réaction d'une publication.
+// LikeHandler add, move out or replace the post reaction.
 func LikeHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -952,10 +1031,9 @@ func LikeHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 		userSession, ok, err := m.RechercheSession(sessionID)
 		if err != nil {
 			log.Println("Erreur récupération session :", err)
-			renderError(w, http.StatusInternalServerError, nil)
+			renderError(w, 500, nil)
 			return
 		}
-
 		if !ok {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
@@ -963,86 +1041,109 @@ func LikeHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		// Récupérer les données du formulaire.
 		if err := r.ParseForm(); err != nil {
-			http.Error(w, "Formulaire invalide", http.StatusBadRequest)
+			renderError(w, 400, &ErrorDetails{Error: errors.New("Formulaire invalide"), AllowedMethods: nil})
 			return
 		}
 
-		postID := strings.TrimSpace(r.FormValue("post_id"))
+		targetType := strings.TrimSpace(r.FormValue("target_type"))
+		targetID := strings.TrimSpace(r.FormValue("target_id"))
 		reaction := strings.TrimSpace(r.FormValue("reaction"))
 
-		if postID == "" {
-			http.Error(w, "Identifiant de publication manquant", http.StatusBadRequest)
+		parsedID, err := uuid.FromString(targetID)
+		if err != nil {
+			renderError(w, 400, &ErrorDetails{Error: errors.New("Identifiant de cible invalide"), AllowedMethods: nil})
 			return
 		}
+
+		targetID = parsedID.String()
 
 		// Accepter uniquement les deux réactions autorisées.
 		if reaction != "like" && reaction != "dislike" {
-			http.Error(w, "Réaction invalide", http.StatusBadRequest)
+			renderError(w, 400, &ErrorDetails{Error: errors.New("Réaction invalide"), AllowedMethods: nil})
 			return
 		}
 
 		userID := userSession.UserID
 
+		targetQuery := ""
+		reactionQuery := ""
+		deleteQuery := ""
+		updateQuery := ""
+		insertQuery := ""
+
+		switch targetType {
+		case "post":
+
+			targetQuery = "SELECT id FROM posts WHERE id = ?"
+			reactionQuery = "SELECT reaction FROM likes WHERE user_id = ? AND post_id = ?"
+			deleteQuery = "DELETE FROM likes WHERE user_id = ? AND post_id = ?"
+			updateQuery = "UPDATE likes SET reaction = ? WHERE user_id = ? AND post_id = ?"
+			insertQuery = "INSERT INTO likes (user_id, post_id, reaction) VALUES (?, ?, ?)"
+
+		case "comment":
+			targetQuery = "SELECT post_id FROM comments WHERE id = ?"
+			reactionQuery = "SELECT reaction FROM comment_likes WHERE user_id = ? AND comment_id = ?"
+			deleteQuery = "DELETE FROM comment_likes WHERE user_id = ? AND comment_id = ?"
+			updateQuery = "UPDATE comment_likes SET reaction = ? WHERE user_id = ? AND comment_id = ?"
+			insertQuery = "INSERT INTO comment_likes (user_id, comment_id, reaction) VALUES (?, ?, ?)"
+
+		default:
+			renderError(w, 400, &ErrorDetails{Error: errors.New("Erreur : le type n'est pas un post ou un comment"), AllowedMethods: nil})
+			return
+		}
+
 		// Commencer une transaction.
 		tx, err := db.Begin()
 		if err != nil {
 			log.Println("Erreur début transaction :", err)
-			http.Error(w, "Erreur serveur", http.StatusInternalServerError)
+			renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur serveur"), AllowedMethods: nil})
 			return
 		}
 		defer tx.Rollback()
 
+		//checking for a existing ID
+		var postID string
+
+		err = tx.QueryRow(targetQuery, targetID).Scan(&postID)
+		if errors.Is(err, sql.ErrNoRows) {
+			renderError(w, 404, &ErrorDetails{Error: errors.New("La publication ou la réponse demandée n'existe pas"), AllowedMethods: nil})
+			return
+		}
+		if err != nil {
+			log.Println("Erreur de vérification de la cible :", err)
+			renderError(w, 500, nil)
+			return
+		}
+
 		// Chercher la réaction existante de cet utilisateur.
 		var existingReaction string
 
-		err = tx.QueryRow(
-			"SELECT reaction FROM likes WHERE user_id = ? AND post_id = ?",
-			userID,
-			postID,
-		).Scan(&existingReaction)
+		err = tx.QueryRow(reactionQuery, userID, targetID).Scan(&existingReaction)
 
 		switch {
 		case err == nil && existingReaction == reaction:
-			// Même réaction : on la retire.
-			_, err = tx.Exec(
-				"DELETE FROM likes WHERE user_id = ? AND post_id = ?",
-				userID,
-				postID,
-			)
+			_, err = tx.Exec(deleteQuery, userID, targetID)
 
 		case err == nil:
-			// Réaction différente : on la remplace.
-			_, err = tx.Exec(
-				"UPDATE likes SET reaction = ? WHERE user_id = ? AND post_id = ?",
-				reaction,
-				userID,
-				postID,
-			)
+			_, err = tx.Exec(updateQuery, reaction, userID, targetID)
 
 		case errors.Is(err, sql.ErrNoRows):
-			// Aucune réaction : on ajoute celle demandée.
-			_, err = tx.Exec(
-				"INSERT INTO likes (user_id, post_id, reaction) VALUES (?, ?, ?)",
-				userID,
-				postID,
-				reaction,
-			)
+			_, err = tx.Exec(insertQuery, userID, targetID, reaction)
 		}
-
 		if err != nil {
 			log.Println("Erreur modification réaction :", err)
-			http.Error(w, "Impossible de modifier la réaction", http.StatusInternalServerError)
+			renderError(w, 500, &ErrorDetails{Error: errors.New("Impossible de modifier la réaction"), AllowedMethods: nil})
 			return
 		}
 
 		// Valider la transaction.
 		if err := tx.Commit(); err != nil {
 			log.Println("Erreur validation transaction :", err)
-			http.Error(w, "Erreur serveur", http.StatusInternalServerError)
+			renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur serveur"), AllowedMethods: nil})
 			return
 		}
 
-		// Revenir à la liste des publications.
-		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+		// Revenir à la publication concernée
+		http.Redirect(w, r, "/posts/"+postID, http.StatusSeeOther)
 	}
 }
