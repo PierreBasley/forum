@@ -62,39 +62,30 @@ func CreatePasswordResetCode(db *sql.DB, email string) error {
 	return nil
 }
 
-func VerifyPasswordResetCode(db *sql.DB, code string) (string, error) {
+func VerifyPasswordResetCode(db *sql.DB, email, code string) (string, error) {
 	var userID string
-
-	//TODO : There is a problem about that request. Where is the email variable ?
-	err := db.QueryRow(
-		"SELECT id FROM users WHERE email = ?",
-	).Scan(&userID)
-
-	if err != nil {
-		return "", errors.New("code incorrect ou expiré")
-	}
-
 	var codeID string
 
-	err = db.QueryRow(`
-		SELECT id
-		FROM password_reset_codes
-		WHERE user_id = ?
-		AND code_hash = ?
-		AND expires_at > datetime('now')
-		AND used = 0
+	err := db.QueryRow(`
+		SELECT prc.user_id, prc.id
+		FROM password_reset_codes AS prc
+		INNER JOIN users AS u ON u.id = prc.user_id
+		WHERE u.email = ?
+		AND prc.code_hash = ?
+		AND prc.expires_at > datetime('now')
+		AND prc.used = 0
+		ORDER BY prc.expires_at DESC
 		LIMIT 1
-	`, userID, HashTwoFactorCode(code)).Scan(&codeID)
+	`, email, HashTwoFactorCode(code)).Scan(&userID, &codeID)
 
 	if err != nil {
 		return "", errors.New("code incorrect ou expiré")
 	}
 
 	_, err = db.Exec(
-		"UPDATE password_reset_codes SET used = 1 WHERE id = ?",
+		"UPDATE password_reset_codes SET used = 1 WHERE id = ? AND used = 0",
 		codeID,
 	)
-
 	if err != nil {
 		return "", err
 	}
