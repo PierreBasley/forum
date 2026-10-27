@@ -25,26 +25,56 @@
 
             {{range .Posts}}
                 <article class="question">
-                    <h3 class="question__title">
-                        <a href="/posts/{{.ID}}">{{.Title}}</a>
-                    </h3>
+                    <div class="voted-content">
+                        <div class="vote-panel">
+                            <p class="vote-score">
+                                <span class="vote-score__value">{{.Score}}</span>
+                                <span class="vote-score__label">score</span>
+                            </p>
+                        </div>
 
-                    <p class="question__content">{{.Content}}</p>
+                        <div class="voted-content__body">
+                            <h3 class="question__title">
+                                <a href="/posts/{{.ID}}">{{.Title}}</a>
+                            </h3>
 
-                    {{if .Categories}}
-                        <ul class="question__tags">
-                            {{range .Categories}}
-                                <li class="tag">{{.}}</li>
+                            <p class="question__content question__excerpt">{{.Content}}</p>
+
+                            {{if .Categories}}
+                                <ul class="question__tags">
+                                    {{range .Categories}}
+                                        <li class="tag">{{.}}</li>
+                                    {{end}}
+                                </ul>
                             {{end}}
-                        </ul>
-                    {{end}}
 
-                    <p class="question__meta">
-                        Publié par <strong>{{.Username}}</strong> le
-                        <time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
-                            {{.CreatedAt.Format "02/01/2006 à 15:04"}}
-                        </time>
-                    </p>
+                            <p class="question__meta">
+                                Publié par <strong>{{.Username}}</strong> le
+                                <time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
+                                    {{.CreatedAt.Format "02/01/2006 à 15:04"}}
+                                </time>
+                            </p>
+
+                            <div class="question__links">
+                                <a href="/posts/{{.ID}}">
+                                    Lire la publication
+                                </a>
+
+                                <a
+                                    class="question__replies"
+                                    href="/posts/{{.ID}}#comments-title"
+                                >
+                                    {{if eq .RepliesCount 0}}
+                                        Aucune réponse
+                                    {{else if eq .RepliesCount 1}}
+                                        1 réponse
+                                    {{else}}
+                                        {{.RepliesCount}} réponses
+                                    {{end}}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </article>
             {{else}}
                 <div class="empty-state">

@@ -1589,6 +1589,55 @@ Les doubles traits de soulignement sont une convention de nommage indiquant "él
     font-size: 0.875rem;
 }
 
+/* Limite uniquement les aperçus de la liste des publications. */
+.question__excerpt {
+    /* Hauteur de ligne explicite pour calculer le repli. */
+    line-height: 1.6;
+
+    /* Limite la hauteur à quatre lignes :
+       4 × 1.6em = 6.4em. */
+    max-height: 6.4em;
+    overflow: hidden;
+
+    /* Coupe le texte après quatre lignes avec le mécanisme
+       de limitation multiligne pris en charge par le navigateur. */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+}
+
+/* Dispose les liens sous les informations de la publication. */
+.question__links {
+    display: flex;
+
+    /* Autorise le passage sur une nouvelle ligne sur petit écran. */
+    flex-wrap: wrap;
+    align-items: center;
+
+    gap: var(--space-3) var(--space-6);
+    margin-top: var(--space-4);
+}
+
+.question__links > a {
+    color: var(--color-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-underline-offset: 0.2em;
+}
+
+/* Reprend la palette des étiquettes du forum. */
+.question__replies {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius);
+    background-color: var(--color-tag-background);
+}
+
+/* Facilite la navigation au clavier. */
+.question__links > a:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+}
+
 /* Les règles à l’intérieur s’appliquent uniquement
    lorsque la largeur du viewport est au plus de 48rem. */
 @media (max-width: 48rem) {

@@ -457,7 +457,24 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			posts.title,
 			posts.content,
 			COALESCE(posts.categories, ''),
-			posts.created_at
+			posts.created_at,
+			(
+				SELECT COUNT(*)
+				FROM likes
+				WHERE likes.post_id = posts.id
+				AND likes.reaction = 'like'
+			) AS likes_count,
+			(
+				SELECT COUNT(*)
+				FROM likes
+				WHERE likes.post_id = posts.id
+				AND likes.reaction = 'dislike'
+			) AS dislikes_count,
+			(
+				SELECT COUNT(*)
+				FROM comments
+				WHERE comments.post_id = posts.id
+			) AS replies_count
 		FROM posts
 		JOIN users ON users.id = posts.user_id
 		ORDER BY posts.created_at DESC
@@ -482,6 +499,9 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				&post.Content,
 				&categoryText,
 				&dateText,
+				&post.LikesCount,
+				&post.DislikesCount,
+				&post.RepliesCount,
 			)
 			if err != nil {
 				log.Println("Erreur de lecture d'une publication :", err)
@@ -499,6 +519,8 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			if categoryText != "" {
 				post.Categories = strings.Split(categoryText, ",")
 			}
+
+			post.Score = post.LikesCount - post.DislikesCount
 
 			posts = append(posts, post)
 		}
