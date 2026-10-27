@@ -401,7 +401,7 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			}
 
 			if utf8.RuneCountInString(content) > 15000 {
-				renderError(w, 400, &ErrorDetails{Error: errors.New("La taille du post a dépassé "), AllowedMethods: nil})
+				renderError(w, 400, &ErrorDetails{Error: errors.New("La taille du post a dépassé la limite de caractères"), AllowedMethods: nil})
 				return
 			}
 
@@ -792,7 +792,7 @@ func Comment(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			}
 
 			if utf8.RuneCountInString(content) > 15000 {
-				renderError(w, 400, &ErrorDetails{Error: errors.New("La taille du post a dépassé "), AllowedMethods: nil})
+				renderError(w, 400, &ErrorDetails{Error: errors.New("La taille de la réponse a dépassé la limite de caractères"), AllowedMethods: nil})
 				return
 			}
 			// Check that the user is logged in
