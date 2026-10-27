@@ -32,15 +32,11 @@ Forum web écrit en Go, réalisé dans le cadre de la formation full-stack devel
    ```
    cd forum
    ```
-3. Créer le dossier de la base de données (étape nécessaire tant que le projet ne le crée pas automatiquement) :
-   ```
-   mkdir bdd
-   ```
-4. Lancer le serveur :
+3. Lancer le serveur :
    ```
    go run .
    ```
-5. Ouvrir le forum dans le navigateur : http://localhost:8080
+4. Ouvrir le forum dans le navigateur : http://localhost:8080
 
 Pour arrêter le serveur, appuyer sur `Ctrl + C` dans le terminal.
 
@@ -57,7 +53,7 @@ Pour arrêter le serveur, appuyer sur `Ctrl + C` dans le terminal.
 
 ## Base de données
 
-Le projet utilise SQLite. Le fichier `bdd/db.sqlite` est créé au premier lancement, puis les tables sont créées automatiquement par les migrations : `roles`, `users`, `posts`, `comments`, `likes`, `comment_likes` et `password_reset_codes`.
+Le projet utilise SQLite. Le fichier `bdd/db.sqlite` est fourni avec le projet. Au démarrage, les migrations créent automatiquement les tables qui manquent : `roles`, `users`, `posts`, `comments`, `likes`, `comment_likes` et `password_reset_codes`.
 
 ## Sécurité
 
