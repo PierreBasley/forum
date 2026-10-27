@@ -933,12 +933,14 @@ func ForgotPasswordHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			email := r.FormValue("email")
 
 			if email == "" {
+				log.Println("Email obligatoire")
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Email obligatoire"), AllowedMethods: nil})
 				return
 			}
 
 			err = login.CreatePasswordResetCode(db, email)
 			if err != nil {
+				log.Printf("Erreur dans l'envoi du code de reinitialisation du mot de passe : %v", err)
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Erreur dans l'envoi du code de reinitialisation du mot de passe"), AllowedMethods: nil})
 				return
 			}
@@ -996,11 +998,12 @@ func ResetPasswordHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				return
 			}
 
+			email := r.FormValue("email")
 			code := r.FormValue("code")
 			password := r.FormValue("password")
 			passwordConfirm := r.FormValue("password_confirm")
 
-			if code == "" || password == "" || passwordConfirm == "" {
+			if email == "" || code == "" || password == "" || passwordConfirm == "" {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Tous les champs sont obligatoires"), AllowedMethods: nil})
 				return
 			}
@@ -1022,7 +1025,7 @@ func ResetPasswordHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				return
 			}
 
-			userID, err := login.VerifyPasswordResetCode(db, code)
+			userID, err := login.VerifyPasswordResetCode(db, email, code)
 			if err != nil {
 				renderError(w, 401, &ErrorDetails{Error: errors.New("Code incorrect ou expiré"), AllowedMethods: nil})
 				return
