@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gofrs/uuid"
 )
@@ -39,29 +40,31 @@ func Index(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 
-		var userData session.Authentified
+		// var userData session.Authentified
 
-		_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
-		if err != nil {
-			renderError(w, 500, nil)
-			return
-		}
-		if ok == true {
-			userData.IsActive = true
-		}
+		// _, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+		// if err != nil {
+		// 	renderError(w, 500, nil)
+		// 	return
+		// }
+		// if ok == true {
+		// 	userData.IsActive = true
+		// }
 
-		t, err := parseTemplates(INDEX_PATH)
-		if err != nil {
-			renderError(w, 500, nil)
-			return
-		}
+		// t, err := parseTemplates(INDEX_PATH)
+		// if err != nil {
+		// 	renderError(w, 500, nil)
+		// 	return
+		// }
 
-		pageData := models.PageData{Auth: userData}
-		w, err = executeBuffer(t, w, pageData)
-		if err != nil {
-			renderError(w, 500, nil)
-			return
-		}
+		// pageData := models.PageData{Auth: userData}
+		// w, err = executeBuffer(t, w, pageData)
+		// if err != nil {
+		// 	renderError(w, 500, nil)
+		// 	return
+		// }
+
+		http.Redirect(w, r, "/posts", http.StatusFound)
 	}
 }
 
@@ -327,6 +330,7 @@ func Logout(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 		login.DeleteSessionCookie(w, COOKIE_NAME)
+		w.Header().Set("Cache-Control", "no-store")
 		http.ServeFile(w, r, LOGOUT_PATH)
 	}
 }
@@ -391,12 +395,12 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				return
 			}
 
-			if content == "" {
+			if strings.TrimSpace(content) == "" {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Le contenu est obligatoire"), AllowedMethods: nil})
 				return
 			}
 
-			if len(content) > 15000 {
+			if utf8.RuneCountInString(content) > 15000 {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("La taille du post a dépassé "), AllowedMethods: nil})
 				return
 			}
@@ -759,8 +763,13 @@ func Comment(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			// both input- and output-side (output is handled by templates)
 			//PB : TODO seeing that with YF, putting a limit to the lenght of the comment
 			content := r.FormValue("content")
-			if content == "" {
+			if strings.TrimSpace(content) == "" {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Commentaire vide"), AllowedMethods: nil})
+				return
+			}
+
+			if utf8.RuneCountInString(content) > 15000 {
+				renderError(w, 400, &ErrorDetails{Error: errors.New("La taille du post a dépassé "), AllowedMethods: nil})
 				return
 			}
 			// Check that the user is logged in

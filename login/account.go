@@ -34,7 +34,7 @@ func CreateAccount(db *sql.DB, username string, email string, password string) e
 		return err
 	}
 
-	role := 2
+	role := 1
 
 	_, err = db.Exec(`
 		INSERT INTO users (id, username, email, password_hash, roles_id, created_at)
