@@ -25,6 +25,7 @@ type Post struct {
 	LikedByMe     bool
 	DislikesCount int
 	DislikedByMe  bool
+	Score         int
 }
 
 type Comment struct {
@@ -36,6 +37,7 @@ type Comment struct {
 	LikedByMe     bool
 	DislikesCount int
 	DislikedByMe  bool
+	Score         int
 }
 
 type PostsPageData struct {

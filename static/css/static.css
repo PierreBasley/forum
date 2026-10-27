@@ -1436,6 +1436,159 @@ Les doubles traits de soulignement sont une convention de nommage indiquant "él
     font-size: 0.875rem;
 }
 
+/* Dispose les votes à gauche et le contenu à droite. */
+.voted-content {
+    display: grid;
+
+    /* La colonne de vote s'adapte à son contenu.
+       La colonne de texte occupe l'espace restant. */
+    grid-template-columns: max-content minmax(0, 1fr);
+
+    gap: var(--space-6);
+
+    /* Maintient les deux blocs alignés en haut. */
+    align-items: start;
+}
+
+/* Espace le titre de la publication et le bloc situé dessous. */
+.question > .question__title + .voted-content {
+    margin-top: var(--space-6);
+}
+
+/* Autorise le contenu à rétrécir dans la grille. */
+.voted-content__body {
+    min-width: 0;
+}
+
+/* Supprime la marge supérieure du premier élément du contenu :
+   auteur/date pour la publication, titre pour les réponses. */
+.voted-content__body > :first-child {
+    margin-top: 0;
+}
+
+/* Centre le formulaire ou le score du visiteur déconnecté. */
+.vote-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 3rem;
+}
+
+/* Place la flèche positive, le score et la flèche négative
+   les uns sous les autres. */
+.vote-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+}
+
+.vote-button {
+    /* Centre la flèche dans le bouton. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 3rem;
+    height: 3rem;
+    padding: 0;
+
+    border: 2px solid var(--color-border);
+    border-radius: 50%;
+
+    background-color: var(--color-surface);
+    color: var(--color-muted);
+
+    font: inherit;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+/* Signale que le bouton peut être activé. */
+.vote-button:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-tag-background);
+    color: var(--color-primary);
+}
+
+/* Rend visible le bouton ciblé lors de la navigation au clavier. */
+.vote-button:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 3px;
+}
+
+/* Identifie la réaction choisie par l'utilisateur. */
+.vote-button[aria-pressed="true"] {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+
+    /* Ajoute un contour intérieur pour distinguer aussi la forme. */
+    box-shadow: inset 0 0 0 2px var(--color-surface);
+}
+
+/* Préserve l'état sélectionné lorsque le pointeur le survole. */
+.vote-button[aria-pressed="true"]:hover {
+    border-color: var(--color-primary-hover);
+    background-color: var(--color-primary-hover);
+}
+
+.vote-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    /* Retire les marges natives du paragraphe. */
+    margin: 0;
+
+    text-align: center;
+
+    /* Évite de couper un score négatif entre le signe et le nombre. */
+    white-space: nowrap;
+}
+
+.vote-score__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+
+    /* Donne une largeur uniforme aux chiffres,
+       lorsque la police propose cette fonctionnalité. */
+    font-variant-numeric: tabular-nums;
+}
+
+.vote-score__label {
+    /* Détache légèrement la pastille du nombre. */
+    margin-top: var(--space-2);
+
+    /* Crée de l'espace autour du libellé. */
+    padding: 0.15rem 0.5rem;
+
+    /* Reprend les couleurs déjà utilisées dans le forum. */
+    background-color: var(--color-tag-background);
+    color: var(--color-primary);
+
+    /* Donne une forme de petite capsule. */
+    border-radius: 999px;
+
+    /* Rend le libellé compact, mais lisible. */
+    font-size: 0.625rem;
+    font-weight: 600;
+    line-height: 1.5;
+
+    /* Transforme visuellement « score » en « SCORE ».
+       Le texte du HTML reste inchangé. */
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.vote-login {
+    margin: var(--space-4) 0 0;
+    font-size: 0.875rem;
+}
+
 /* Les règles à l’intérieur s’appliquent uniquement
    lorsque la largeur du viewport est au plus de 48rem. */
 @media (max-width: 48rem) {
@@ -1555,5 +1708,13 @@ Les doubles traits de soulignement sont une convention de nommage indiquant "él
 
     .comment-form > .button {
         width: 100%;
+    }
+}
+
+@media (max-width: 40rem) {
+    .voted-content {
+        /* Préserve davantage de largeur pour le texte,
+           tout en gardant les votes à gauche. */
+        gap: var(--space-3);
     }
 }

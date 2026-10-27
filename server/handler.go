@@ -694,7 +694,7 @@ func ReadPost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 			comment.LikedByMe = commentReaction == "like"
 			comment.DislikedByMe = commentReaction == "dislike"
-
+			comment.Score = comment.LikesCount - comment.DislikesCount
 			comments = append(comments, comment)
 		}
 
@@ -726,6 +726,7 @@ func ReadPost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			renderError(w, 500, nil)
 			return
 		}
+		post.Score = post.LikesCount - post.DislikesCount
 
 		pageData := models.PostPageData{
 			Auth:     userData,

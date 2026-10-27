@@ -7,9 +7,52 @@
     <main class="container page-content">
         <p><a href="/posts">Retour aux publications</a></p>
 
-        <article class="question" aria-labelledby="post-title">
-            <h1 class="question__title" id="post-title">{{.Post.Title}}</h1>
+    <article class="question" aria-labelledby="post-title">
+        <h1 class="question__title" id="post-title">{{.Post.Title}}</h1>
 
+    <div class="voted-content">
+        <div class="vote-panel">
+    {{if .Auth.IsActive}}
+        <form action="/like" method="POST" class="vote-form">
+            <input type="hidden" name="target_type" value="post">
+            <input type="hidden" name="target_id" value="{{.Post.ID}}">
+
+            <button
+                type="submit"
+                name="reaction"
+                value="like"
+                class="vote-button"
+                aria-label="Voter positivement"
+                aria-pressed="{{.Post.LikedByMe}}"
+            >
+                <span aria-hidden="true">▲</span>
+            </button>
+
+            <p class="vote-score">
+                <span class="vote-score__value">{{.Post.Score}}</span>
+                <span class="vote-score__label">score</span>
+            </p>
+
+            <button
+                type="submit"
+                name="reaction"
+                value="dislike"
+                class="vote-button"
+                aria-label="Voter négativement"
+                aria-pressed="{{.Post.DislikedByMe}}"
+            >
+                <span aria-hidden="true">▼</span>
+            </button>
+        </form>
+    {{else}}
+        <p class="vote-score">
+            <span class="vote-score__value">{{.Post.Score}}</span>
+            <span class="vote-score__label">score</span>
+        </p>
+    {{end}}
+    </div>
+
+        <div class="voted-content__body">
             <p class="question__meta">
                 Publié par <strong>{{.Post.Username}}</strong> le
                 <time datetime="{{.Post.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
@@ -26,33 +69,14 @@
                     {{end}}
                 </ul>
             {{end}}
-            <div class="post-reactions">
-            {{if .Auth.IsActive}}
-                <form action="/like" method="POST" class="post-reactions__form">
-                <input type="hidden" name="target_type" value="post">
-                <input type="hidden" name="target_id" value="{{.Post.ID}}">
-                    <button
-                    type="submit"
-                    name="reaction"
-                    value="like"
-                    class="reaction-button"
-                    aria-pressed="{{.Post.LikedByMe}}"
-                    >J’aime ({{.Post.LikesCount}})</button>
-                    <button
-                    type="submit"
-                    name="reaction"
-                    value="dislike"
-                    class="reaction-button"
-                    aria-pressed="{{.Post.DislikedByMe}}"
-                    >Je n’aime pas ({{.Post.DislikesCount}})</button>
-                </form>
-            {{else}}
-                <p class="post-reactions__counts">J’aime : {{.Post.LikesCount}}
-                · Je n’aime pas : {{.Post.DislikesCount}}</p>
-                <p><a href="/login">Connectez-vous pour voter</a></p>
-            {{end}}
-            </div>
-        </article>
+            {{if not .Auth.IsActive}}
+        <p class="vote-login">
+            <a href="/login">Connectez-vous pour voter</a>
+        </p>
+        {{end}}
+        </div>
+    </div>
+</article>
 
         <section class="comments-panel" aria-labelledby="comments-title">
     <div class="comments-panel__header">
@@ -62,48 +86,68 @@
     <div class="comments-list">
         {{range .Comments}}
             <article class="comment">
-                <h3 class="comment__author">Réponse de {{.Username}}</h3>
+    <div class="voted-content">
+        <div class="vote-panel">
+            {{if $.Auth.IsActive}}
+                <form action="/like" method="POST" class="vote-form">
+                    <input type="hidden" name="target_type" value="comment">
+                    <input type="hidden" name="target_id" value="{{.ID}}">
 
-                <p class="comment__meta">
-                    Publiée le
-                    <time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
-                        {{.CreatedAt.Format "02/01/2006 à 15:04"}}
-                    </time>
+                    <button
+                        type="submit"
+                        name="reaction"
+                        value="like"
+                        class="vote-button"
+                        aria-label="Voter positivement"
+                        aria-pressed="{{.LikedByMe}}"
+                    >
+                        <span aria-hidden="true">▲</span>
+                    </button>
+
+                    <p class="vote-score">
+                        <span class="vote-score__value">{{.Score}}</span>
+                        <span class="vote-score__label">score</span>
+                    </p>
+
+                    <button
+                        type="submit"
+                        name="reaction"
+                        value="dislike"
+                        class="vote-button"
+                        aria-label="Voter négativement"
+                        aria-pressed="{{.DislikedByMe}}"
+                    >
+                        <span aria-hidden="true">▼</span>
+                    </button>
+                </form>
+            {{else}}
+                <p class="vote-score">
+                    <span class="vote-score__value">{{.Score}}</span>
+                    <span class="vote-score__label">score</span>
                 </p>
+            {{end}}
+        </div>
 
-                <p class="comment__content">{{.Content}}</p>
-                <div class="post-reactions">
-                {{if $.Auth.IsActive}}
-                    <form action="/like" method="POST" class="post-reactions__form">
-                        <input type="hidden" name="target_type" value="comment">
-                        <input type="hidden" name="target_id" value="{{.ID}}">
+        <div class="voted-content__body">
+            <h3 class="comment__author">Réponse de {{.Username}}</h3>
 
-                        <button
-                            type="submit"
-                            name="reaction"
-                            value="like"
-                            class="reaction-button"
-                            aria-pressed="{{.LikedByMe}}"
-                        >J’aime ({{.LikesCount}})</button>
-                        <button
-                            type="submit"
-                            name="reaction"
-                            value="dislike"
-                            class="reaction-button"
-                            aria-pressed="{{.DislikedByMe}}"
-                        >Je n’aime pas ({{.DislikesCount}})</button>
-                    </form>
-                {{else}}
-                    <p class="post-reactions__counts">
-                        J’aime : {{.LikesCount}}
-                        · Je n’aime pas : {{.DislikesCount}}
-                    </p>
-                    <p>
-                        <a href="/login">Connectez-vous pour voter</a>
-                    </p>
-                {{end}}
-</div>
-            </article>
+            <p class="comment__meta">
+                Publiée le
+                <time datetime="{{.CreatedAt.Format "2006-01-02T15:04:05Z07:00"}}">
+                    {{.CreatedAt.Format "02/01/2006 à 15:04"}}
+                </time>
+            </p>
+
+            <p class="comment__content">{{.Content}}</p>
+
+            {{if not $.Auth.IsActive}}
+                <p class="vote-login">
+                    <a href="/login">Connectez-vous pour voter</a>
+                </p>
+            {{end}}
+        </div>
+    </div>
+</article>
         {{else}}
             <div class="comments-empty">
                 <p>Cette publication n’a pas encore de réponse.</p>
