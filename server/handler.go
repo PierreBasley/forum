@@ -389,6 +389,11 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				return
 			}
 
+			if len(categories) < 1 {
+				renderError(w, 400, &ErrorDetails{Error: errors.New("Aucun stack n'a été sélectionné."), AllowedMethods: nil})
+				return
+			}
+
 			if len(categories) > 5 {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Vous avez mis trop de stacks."), AllowedMethods: nil})
 				return

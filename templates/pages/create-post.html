@@ -48,9 +48,9 @@
                 </div>
 
                 <!-- Regroupe les cases à cocher sous un intitulé commun. -->
-                <fieldset class="form-options" aria-describedby="categories-help">
+                <fieldset id="categories-group" class="form-options" aria-describedby="categories-help">
                     <legend>Technologies concernées</legend>
-                    <p class="form-field__help" id="categories-help"> Sélectionne les technologies liées à ta question (jusqu'à 5).</p>
+                    <p class="form-field__help" id="categories-help"> Sélectionne entre 1 à 5 technologies.</p>
 
                     <div class="form-options__list">
                         <!-- Le label englobe la case et son texte :
@@ -74,5 +74,6 @@
         </section>
     </main>
     {{template "footer"}}
+    <script src="/static/js/create-post.js" defer></script>
 </body>
 </html>
