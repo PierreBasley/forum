@@ -19,7 +19,6 @@ Forum web écrit en Go, réalisé dans le cadre de la formation full-stack devel
 
 - Go version 1.26.2
 - Git
-- Un compilateur C (par exemple gcc, ou les « Xcode Command Line Tools » sur Mac), car le package `sqlite3` en a besoin
 - Une connexion internet au premier lancement, pour télécharger les packages
 
 ## Lancer le projet
@@ -57,9 +56,9 @@ Le projet utilise SQLite. Le fichier `bdd/db.sqlite` est fourni avec le projet. 
 
 ## Sécurité
 
-- Les mots de passe sont chiffrés avec bcrypt et ne sont jamais stockés en clair.
+- Seuls les hashs de mots de passe (générés avec bcrypt) sont conservés.
 - Le cookie de session ne contient qu'un identifiant aléatoire (UUID). Les informations de la session restent côté serveur, et la session a une durée limitée.
-- Le cookie est `HttpOnly` : le JavaScript du navigateur ne peut pas le lire.
+- Le cookie est `HttpOnly` : le JavaScript du navigateur ne peut pas le lire (protection supplémentaire contre XSS).
 
 ## Packages utilisés
 
@@ -76,6 +75,6 @@ Le serveur renvoie une page d'erreur adaptée pour les codes HTTP 400, 401, 403,
 ## Auteurs
 
 - Abdou Cherif
-- Terapty-returns
-- PierreBasley
-- Hicham Hehe
+- Yohann Fedaoui
+- Pierre Basley
+- Hicham Hee
