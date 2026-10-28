@@ -308,7 +308,6 @@ func Cookies(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// check pourquoi la déconnexion ne marche pas tout le temps
 func Logout(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -335,7 +334,6 @@ func Logout(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	}
 }
 
-// CreatePost create a post written by the user.
 func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -353,7 +351,7 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			}
 
 			userData := session.Authentified{IsActive: true}
-			pageData := models.PageData{Auth: userData}
+			pageData := models.PageData{Auth: userData, Stacks: stacks[:]}
 
 			t, err := parseTemplates(CREATEPOST_PATH)
 			if err != nil {
@@ -384,6 +382,17 @@ func CreatePost(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			title := strings.TrimSpace(r.FormValue("title"))
 			content := strings.TrimSpace(r.FormValue("content"))
 			categories := r.Form["categories"]
+
+			//prévoir fonction catégories
+			if checkCategories(categories) == false {
+				renderError(w, 400, &ErrorDetails{Error: errors.New("Certains stacks ne sont pas traités par le serveur."), AllowedMethods: nil})
+				return
+			}
+
+			if len(categories) > 5 {
+				renderError(w, 400, &ErrorDetails{Error: errors.New("Vous avez mis trop de stacks."), AllowedMethods: nil})
+				return
+			}
 
 			if title == "" {
 				renderError(w, 400, &ErrorDetails{Error: errors.New("Le titre est obligatoire"), AllowedMethods: nil})

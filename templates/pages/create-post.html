@@ -50,37 +50,17 @@
                 <!-- Regroupe les cases à cocher sous un intitulé commun. -->
                 <fieldset class="form-options" aria-describedby="categories-help">
                     <legend>Technologies concernées</legend>
-                    <p class="form-field__help" id="categories-help"> Sélectionne les technologies liées à ta question.</p>
+                    <p class="form-field__help" id="categories-help"> Sélectionne les technologies liées à ta question (jusqu'à 5).</p>
 
                     <div class="form-options__list">
                         <!-- Le label englobe la case et son texte :
                              toute l’étiquette devient cliquable. -->
-                        <label class="checkbox-option">
-                            <input
-                                type="checkbox"
-                                name="categories"
-                                value="sql"
-                            >
-                            <span>SQL</span>
-                        </label>
-
-                        <label class="checkbox-option">
-                            <input
-                                type="checkbox"
-                                name="categories"
-                                value="go"
-                            >
-                            <span>Go</span>
-                        </label>
-
-                        <label class="checkbox-option">
-                            <input
-                                type="checkbox"
-                                name="categories"
-                                value="html"
-                            >
-                            <span>HTML</span>
-                        </label>
+                        {{range .Stacks}}
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="categories" value="{{.}}">
+                                <span>{{.}}</span>
+                            </label>
+                        {{end}}
                     </div>
                 </fieldset>
 

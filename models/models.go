@@ -55,10 +55,5 @@ type PostPageData struct {
 type PageData struct {
 	Auth    session.Authentified
 	Profile User
+	Stacks  []string
 }
-
-// type PageData struct {
-// 	Auth    session.Authentified
-// 	Posts   []Post
-// 	Profile User
-// }
