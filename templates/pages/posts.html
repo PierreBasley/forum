@@ -40,13 +40,21 @@
 
                 <select id="post-sort" name="sort">
                     <option value="newest" {{if eq .Sort "newest"}}selected{{end}}>
-                    Plus récentes
-                </option>
+                        Plus récentes
+                    </option>
 
-                <option value="oldest" {{if eq .Sort "oldest"}}selected{{end}}>
-                    Plus anciennes
-                </option>
-            </select>
+                    <option value="oldest" {{if eq .Sort "oldest"}}selected{{end}}>
+                        Plus anciennes
+                    </option>
+
+                    <option value="score_desc" {{if eq .Sort "score_desc"}}selected{{end}}>
+                        Score le plus élevé
+                    </option>
+
+                    <option value="score_asc" {{if eq .Sort "score_asc"}}selected{{end}}>
+                        Score le plus faible
+                    </option>
+                </select>
             </div>
 
             <fieldset class="form-options" aria-describedby="filter-categories-help">

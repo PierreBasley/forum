@@ -465,12 +465,21 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		sortBy := r.URL.Query().Get("sort")
 
-		orderBy := "posts.created_at DESC, posts.id ASC"
+		var orderBy string
 
-		if sortBy == "oldest" {
+		switch sortBy {
+		case "oldest":
 			orderBy = "posts.created_at ASC, posts.id ASC"
-		} else {
+
+		case "score_desc":
+			orderBy = "(likes_count - dislikes_count) DESC, posts.created_at DESC, posts.id ASC"
+
+		case "score_asc":
+			orderBy = "(likes_count - dislikes_count) ASC, posts.created_at DESC, posts.id ASC"
+
+		default:
 			sortBy = "newest"
+			orderBy = "posts.created_at DESC, posts.id ASC"
 		}
 
 		search := strings.TrimSpace(r.URL.Query().Get("q"))
