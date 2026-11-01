@@ -24,6 +24,17 @@
             </div>
 
             <form class="form" action="/posts" method="GET">
+                <div class="form-field">
+                    <label for="post-search">Rechercher dans les titres</label>
+
+                        <input
+                            type="search"
+                            id="post-search"
+                            name="q"
+                            value="{{.Search}}"
+                            placeholder="Exemple : connexion"
+                        >
+                </div>
             <div class="form-field">
                 <label for="post-sort">Trier les publications</label>
 

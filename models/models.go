@@ -45,6 +45,7 @@ type PostsPageData struct {
 	Auth               session.Authentified
 	Posts              []Post
 	Sort               string
+	Search             string
 	Stacks             []string
 	SelectedCategories map[string]bool
 }

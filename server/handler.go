@@ -473,6 +473,8 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			sortBy = "newest"
 		}
 
+		search := strings.TrimSpace(r.URL.Query().Get("q"))
+
 		categories := r.URL.Query()["category"]
 
 		if len(categories) > 0 && !checkCategories(categories) {
@@ -496,10 +498,30 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			args = append(args, ","+category+",")
 		}
 
+		var conditions []string
+
+		// Une publication doit posséder au moins une catégorie sélectionnée.
+		if len(categoryConditions) > 0 {
+			conditions = append(conditions, "("+strings.Join(categoryConditions, " OR ")+")")
+		}
+
+		// Le titre doit contenir le texte recherché.
+		if search != "" {
+			escapedSearch := strings.NewReplacer(
+				`\`, `\\`,
+				`%`, `\%`,
+				`_`, `\_`,
+			).Replace(search)
+
+			conditions = append(conditions, `posts.title LIKE ? ESCAPE '\'`)
+
+			args = append(args, "%"+escapedSearch+"%")
+		}
+
 		whereClause := ""
 
-		if len(categoryConditions) > 0 {
-			whereClause = " WHERE (" + strings.Join(categoryConditions, " OR ") + ")"
+		if len(conditions) > 0 {
+			whereClause = " WHERE " + strings.Join(conditions, " AND ")
 		}
 
 		rows, err := db.Query(`
@@ -587,6 +609,7 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			Auth:               userData,
 			Posts:              posts,
 			Sort:               sortBy,
+			Search:             search,
 			Stacks:             stacks,
 			SelectedCategories: selectedCategories,
 		}
