@@ -23,6 +23,48 @@
                 {{end}}
             </div>
 
+            <form class="form" action="/posts" method="GET">
+            <div class="form-field">
+                <label for="post-sort">Trier les publications</label>
+
+                <select id="post-sort" name="sort">
+                    <option value="newest" {{if eq .Sort "newest"}}selected{{end}}>
+                    Plus récentes
+                </option>
+
+                <option value="oldest" {{if eq .Sort "oldest"}}selected{{end}}>
+                    Plus anciennes
+                </option>
+            </select>
+            </div>
+
+            <fieldset class="form-options" aria-describedby="filter-categories-help">
+            <legend>Filtrer par catégorie</legend>
+
+            <p class="form-field__help" id="filter-categories-help">
+                Aucune sélection : toutes les catégories.
+                Plusieurs sélections : au moins une catégorie correspondante.
+            </p>
+
+                <div class="form-options__list">
+                    {{range .Stacks}}
+                        <label class="checkbox-option">
+                            <input
+                                type="checkbox"
+                                name="category"
+                                value="{{.}}"
+                                {{if index $.SelectedCategories .}}checked{{end}}
+                            >
+                            <span>{{.}}</span>
+                        </label>
+                    {{end}}
+                </div>
+            </fieldset>
+
+            <button class="button" type="submit">Appliquer</button>
+            <a href="/posts">Réinitialiser les critères</a>
+            </form>
+
             {{range .Posts}}
                 <article class="question">
                     <div class="voted-content">

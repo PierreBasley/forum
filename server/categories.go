@@ -1,6 +1,6 @@
 package server
 
-var stacks = [30]string{
+var stacks = []string{
 	"python",
 	"C",
 	"C++",

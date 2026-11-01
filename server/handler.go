@@ -463,6 +463,45 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 		var posts []models.Post
 
+		sortBy := r.URL.Query().Get("sort")
+
+		orderBy := "posts.created_at DESC, posts.id ASC"
+
+		if sortBy == "oldest" {
+			orderBy = "posts.created_at ASC, posts.id ASC"
+		} else {
+			sortBy = "newest"
+		}
+
+		categories := r.URL.Query()["category"]
+
+		if len(categories) > 0 && !checkCategories(categories) {
+			renderError(w, 400, &ErrorDetails{Error: errors.New("Une catégorie sélectionnée est inconnue."), AllowedMethods: nil})
+			return
+		}
+
+		selectedCategories := make(map[string]bool)
+		var categoryConditions []string
+		var args []any
+
+		for _, category := range categories {
+			if selectedCategories[category] {
+				continue
+			}
+
+			selectedCategories[category] = true
+
+			categoryConditions = append(categoryConditions, "instr(',' || COALESCE(posts.categories, '') || ',', ?) > 0")
+
+			args = append(args, ","+category+",")
+		}
+
+		whereClause := ""
+
+		if len(categoryConditions) > 0 {
+			whereClause = " WHERE (" + strings.Join(categoryConditions, " OR ") + ")"
+		}
+
 		rows, err := db.Query(`
 		SELECT
 			posts.id,
@@ -491,8 +530,7 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			) AS replies_count
 		FROM posts
 		JOIN users ON users.id = posts.user_id
-		ORDER BY posts.created_at DESC
-		`)
+		`+whereClause+" ORDER BY "+orderBy, args...)
 		if err != nil {
 			log.Println(err)
 			renderError(w, 500, &ErrorDetails{Error: errors.New("Erreur récupération des posts"), AllowedMethods: nil})
@@ -546,8 +584,11 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 		}
 
 		pageData := models.PostsPageData{
-			Auth:  userData,
-			Posts: posts,
+			Auth:               userData,
+			Posts:              posts,
+			Sort:               sortBy,
+			Stacks:             stacks,
+			SelectedCategories: selectedCategories,
 		}
 
 		t, err := parseTemplates(POSTS_PATH)

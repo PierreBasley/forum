@@ -42,8 +42,11 @@ type Comment struct {
 }
 
 type PostsPageData struct {
-	Auth  session.Authentified
-	Posts []Post
+	Auth               session.Authentified
+	Posts              []Post
+	Sort               string
+	Stacks             []string
+	SelectedCategories map[string]bool
 }
 
 type PostPageData struct {
