@@ -1,0 +1,26 @@
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+
+secrets:
+  smtp_user:
+    file: ./secrets/smtp_user.txt
+  smtp_password:
+    file: ./secrets/smtp_password.txt
+
+volumes:
+  db_data: 
+    # intentionally left empty
+
+services:
+  web:
+    image: forum:latest
+    ports:
+      - "$PORT_INBOUND:$PORT_CONTAINER"
+    volumes:
+      - db_data:/app/bdd/
+    networks:
+      - frontend
+      - backend

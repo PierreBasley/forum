@@ -1,17 +1,17 @@
 FROM golang:bookworm AS build
 WORKDIR /app
 
-COPY --parents login server models main.go go.mod go.sum .
-ENV CGO_ENABLED=1
-RUN go mod tidy; go build -o forum .
+ADD . .
+RUN go mod tidy
+RUN CGO_ENABLED=1 go build -o forum .
 
-FROM alpine:3.24
+FROM golang:bookworm
 WORKDIR /app
-
-COPY templates/ bdd/db.sqlite /app
-COPY --from=build /app/forum .
-
-ENV PORTNUMBER=8080
-
 ENTRYPOINT ["/app/forum"]
-CMD [""]
+
+ADD templates  ./templates
+ADD migrations ./migrations
+ADD static ./static
+RUN mkdir /app/tmp
+
+COPY --from=build /app/forum /app/forum
