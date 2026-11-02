@@ -1,11 +1,10 @@
-FROM golang:bookworm AS build
+FROM golang:1.27.3-alpine3.24 AS build
 WORKDIR /app
 
 ADD . .
-RUN go mod tidy
-RUN CGO_ENABLED=1 go build -o forum .
+RUN apk add gcc musl-dev; go mod tidy; CGO_ENABLED=1 go build -o forum .
 
-FROM golang:bookworm
+FROM alpine:3.24
 WORKDIR /app
 ENTRYPOINT ["/app/forum"]
 
