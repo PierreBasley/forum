@@ -79,6 +79,11 @@ func (m *Manager) CreationSession(userID string) (string, time.Time, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	err = m.supprimerSessionsUtilisateurSansVerrou(userID)
+	if err != nil {
+		return "", time.Time{}, err
+	}
+
 	//To explain, we create a file which will contain the json data on a session ID
 	//sessionPath is the path of where the file will be created.
 	//the flags os.O_WRONLY (open the file in readonly),
@@ -105,6 +110,59 @@ func (m *Manager) CreationSession(userID string) (string, time.Time, error) {
 		return "", time.Time{}, errors.Join(closeErr, removeErr)
 	}
 	return sessionID.String(), expiresAt, nil
+}
+
+// This method check if another session with the same userID is opened. Must be used after a m.mu.Lock().
+func (m *Manager) supprimerSessionsUtilisateurSansVerrou(userID string) error {
+	entries, err := os.ReadDir(m.dir)
+	if err != nil {
+		return err
+	}
+
+	var pathsToDelete []string
+
+	for _, entry := range entries {
+		if !entry.Type().IsRegular() || filepath.Ext(entry.Name()) != ".json" {
+			continue
+		}
+
+		sessionID := strings.TrimSuffix(entry.Name(), ".json")
+
+		_, err := uuid.FromString(sessionID)
+		if err != nil {
+			continue
+		}
+
+		sessionPath := filepath.Join(m.dir, entry.Name())
+
+		data, err := os.ReadFile(sessionPath)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+
+		var s Session
+
+		err = json.Unmarshal(data, &s)
+		if err != nil {
+			return err
+		}
+
+		if s.UserID == userID {
+			pathsToDelete = append(pathsToDelete, sessionPath)
+		}
+	}
+
+	for _, sessionPath := range pathsToDelete {
+		err := os.Remove(sessionPath)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (m *Manager) RechercheSession(sessionID string) (Session, bool, error) {
