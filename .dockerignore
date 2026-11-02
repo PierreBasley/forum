@@ -1,3 +1,7 @@
-.Dockerignore
+.*ignore
+.env
+.env.example
 .git
 Dockerfile
+compose.yaml
+*.md
