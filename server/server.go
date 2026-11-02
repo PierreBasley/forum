@@ -2,9 +2,17 @@ package server
 
 import (
 	"database/sql"
+	"fmt"
 	"forum/session"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
+)
+
+const (
+	ENV_PORT_NUMBER = "PORT_CONTAINER"
+	DEFAULT_PORT = 8080
 )
 
 func StartHTTPServer(db *sql.DB, m *session.Manager) {
@@ -27,9 +35,23 @@ func StartHTTPServer(db *sql.DB, m *session.Manager) {
 
 	greet()
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	portNumber := DEFAULT_PORT
+	if os.Getenv(ENV_PORT_NUMBER) != "" {
+		envPort, err := strconv.Atoi(os.Getenv(ENV_PORT_NUMBER))
+		if err == nil {
+			portNumber = envPort
+		}
+	}
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", portNumber), nil))
 }
 
 func greet() {
-	log.Print("Serveur HTTP lancé sur http://localhost:8080")
+	portNumber := DEFAULT_PORT
+	if os.Getenv(ENV_PORT_NUMBER) != "" {
+		envPort, err := strconv.Atoi(os.Getenv(ENV_PORT_NUMBER))
+		if err == nil {
+			portNumber = envPort
+		}
+	}
+	log.Printf("Serveur HTTP lancé sur http://localhost:%d", portNumber)
 }
