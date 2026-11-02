@@ -12,6 +12,6 @@ ENTRYPOINT ["/app/forum"]
 ADD templates  ./templates
 ADD migrations ./migrations
 ADD static ./static
-RUN mkdir /app/tmp /app/bdd
+RUN mkdir /app/tmp
 
 COPY --from=build /app/forum /app/forum
