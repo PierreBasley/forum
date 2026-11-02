@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -13,6 +14,10 @@ const REFRESH_INTERVAL = 1 * time.Minute
 const SESSIONS_DIR = "tmp/sessions"
 
 func main() {
+
+	if err := godotenv.Load(); err != nil {
+		log.Println("Attention : fichier .env introuvable")
+	}
 
 	//Initialize the db and the tables
 	db, err := server.CreationDB()
