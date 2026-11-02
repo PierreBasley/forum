@@ -5,3 +5,4 @@
 Dockerfile
 compose.yaml
 *.md
+setup.sh
