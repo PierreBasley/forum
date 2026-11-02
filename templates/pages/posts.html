@@ -10,6 +10,102 @@
             <p>Un problème de code ? Cherchons la solution ensemble.</p>
         </div>
 
+        <div class="posts-layout">
+            <aside class="posts-sidebar" aria-labelledby="filters-title">
+                <h2 id="filters-title" class="posts-sidebar__title">
+                    Recherche et filtres
+                </h2>
+
+            <form class="form" action="/posts" method="GET">
+                    <div class="form-field">
+                        <label for="post-search">Rechercher dans les titres</label>
+
+                            <input
+                                type="search"
+                                id="post-search"
+                                name="q"
+                                value="{{.Search}}"
+                                placeholder="Exemple : connexion"
+                            >
+                    </div>
+                <div class="form-field">
+                    <label for="post-sort">Trier les publications</label>
+
+                    <select id="post-sort" name="sort">
+                        <option value="newest" {{if eq .Sort "newest"}}selected{{end}}>
+                            Plus récentes
+                        </option>
+
+                        <option value="oldest" {{if eq .Sort "oldest"}}selected{{end}}>
+                            Plus anciennes
+                        </option>
+
+                        <option value="score_desc" {{if eq .Sort "score_desc"}}selected{{end}}>
+                            Score le plus élevé
+                        </option>
+
+                        <option value="score_asc" {{if eq .Sort "score_asc"}}selected{{end}}>
+                            Score le plus faible
+                        </option>
+                    </select>
+                </div>
+
+                {{if .Auth.IsActive}}
+                    <fieldset class="form-options">
+                        <legend>Mon activité</legend>
+
+                        <div class="form-options__list">
+                            <label class="checkbox-option">
+                                <input
+                                    type="checkbox"
+                                    name="mine"
+                                    value="1"
+                                    {{if .OnlyMine}}checked{{end}}
+                                >
+                                <span>Mes publications</span>
+                            </label>
+
+                            <label class="checkbox-option">
+                                <input
+                                    type="checkbox"
+                                    name="liked"
+                                    value="1"
+                                    {{if .OnlyLiked}}checked{{end}}
+                                >
+                                <span>Publications que j’ai likées</span>
+                            </label>
+                        </div>
+                    </fieldset>
+                {{end}}
+
+                <fieldset class="form-options" aria-describedby="filter-categories-help">
+                <legend>Filtrer par catégorie</legend>
+
+                <p class="form-field__help" id="filter-categories-help">
+                    Aucune sélection : toutes les catégories.
+                    Plusieurs sélections : au moins une catégorie correspondante.
+                </p>
+
+                    <div class="form-options__list form-options__list--categories">
+                        {{range .Stacks}}
+                            <label class="checkbox-option">
+                                <input
+                                    type="checkbox"
+                                    name="category"
+                                    value="{{.}}"
+                                    {{if index $.SelectedCategories .}}checked{{end}}
+                                >
+                                <span>{{.}}</span>
+                            </label>
+                        {{end}}
+                    </div>
+                </fieldset>
+
+                <button class="button" type="submit">Appliquer</button>
+                <a href="/posts">Réinitialiser les critères</a>
+                </form>
+            </aside>
+
         <section class="questions-panel" aria-labelledby="questions-title">
             <div class="questions-panel__header">
                 <h2 id="questions-title">Questions de la communauté</h2>
@@ -23,66 +119,7 @@
                 {{end}}
             </div>
 
-            <form class="form" action="/posts" method="GET">
-                <div class="form-field">
-                    <label for="post-search">Rechercher dans les titres</label>
-
-                        <input
-                            type="search"
-                            id="post-search"
-                            name="q"
-                            value="{{.Search}}"
-                            placeholder="Exemple : connexion"
-                        >
-                </div>
-            <div class="form-field">
-                <label for="post-sort">Trier les publications</label>
-
-                <select id="post-sort" name="sort">
-                    <option value="newest" {{if eq .Sort "newest"}}selected{{end}}>
-                        Plus récentes
-                    </option>
-
-                    <option value="oldest" {{if eq .Sort "oldest"}}selected{{end}}>
-                        Plus anciennes
-                    </option>
-
-                    <option value="score_desc" {{if eq .Sort "score_desc"}}selected{{end}}>
-                        Score le plus élevé
-                    </option>
-
-                    <option value="score_asc" {{if eq .Sort "score_asc"}}selected{{end}}>
-                        Score le plus faible
-                    </option>
-                </select>
-            </div>
-
-            <fieldset class="form-options" aria-describedby="filter-categories-help">
-            <legend>Filtrer par catégorie</legend>
-
-            <p class="form-field__help" id="filter-categories-help">
-                Aucune sélection : toutes les catégories.
-                Plusieurs sélections : au moins une catégorie correspondante.
-            </p>
-
-                <div class="form-options__list">
-                    {{range .Stacks}}
-                        <label class="checkbox-option">
-                            <input
-                                type="checkbox"
-                                name="category"
-                                value="{{.}}"
-                                {{if index $.SelectedCategories .}}checked{{end}}
-                            >
-                            <span>{{.}}</span>
-                        </label>
-                    {{end}}
-                </div>
-            </fieldset>
-
-            <button class="button" type="submit">Appliquer</button>
-            <a href="/posts">Réinitialiser les critères</a>
-            </form>
+            
 
             {{range .Posts}}
                 <article class="question">
@@ -139,11 +176,12 @@
                 </article>
             {{else}}
                 <div class="empty-state">
-                    <h3>La première question reste à poser.</h3>
-                    <p>Un blocage, une interrogation ? Lance la discussion avec la communauté.</p>
+                    <h3>Aucune publication ne correspond à ces critères.</h3>
+                    <p>Modifie les filtres ou réinitialise les critères.</p>
                 </div>
             {{end}}
         </section>
+        </div>
     </main>
     {{template "footer"}}
 </body>

@@ -1767,3 +1767,83 @@ Les doubles traits de soulignement sont une convention de nommage indiquant "él
         gap: var(--space-3);
     }
 }
+
+/* Deux colonnes : filtres à gauche, publications à droite. */
+.posts-layout {
+    display: grid;
+    grid-template-columns: 20rem minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+}
+
+/* Autorise les deux panneaux à rétrécir sans débordement. */
+.posts-layout > * {
+    min-width: 0;
+}
+
+/* Panneau contenant le formulaire. */
+.posts-sidebar {
+    padding: var(--space-6);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.posts-sidebar__title {
+    margin: 0 0 var(--space-6);
+    font-size: 1.25rem;
+    line-height: 1.3;
+}
+
+/* Les choix liés à l'activité personnelle occupent une ligne chacun. */
+.posts-sidebar .form-options__list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+}
+
+/* Les technologies sont regroupées sur deux colonnes. */
+.posts-sidebar .form-options__list--categories {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    /* Limite la hauteur occupée par les trente catégories. */
+    max-height: 20rem;
+    overflow-y: auto;
+
+    /* Laisse de la place aux contours de focus. */
+    padding: var(--space-2);
+    scroll-padding: var(--space-2);
+}
+
+.posts-sidebar .checkbox-option {
+    min-width: 0;
+    padding: var(--space-2);
+    font-size: 0.875rem;
+}
+
+.posts-sidebar .checkbox-option > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.posts-sidebar .form > .button {
+    width: 100%;
+}
+
+.posts-sidebar .form > a {
+    text-align: center;
+}
+
+/* Sur écran plus étroit, les filtres précèdent les résultats. */
+@media (max-width: 60rem) {
+    .posts-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Réduit les marges intérieures sur téléphone. */
+@media (max-width: 40rem) {
+    .posts-sidebar {
+        padding: var(--space-4);
+    }
+}

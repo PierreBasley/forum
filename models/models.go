@@ -48,6 +48,8 @@ type PostsPageData struct {
 	Search             string
 	Stacks             []string
 	SelectedCategories map[string]bool
+	OnlyMine           bool
+	OnlyLiked          bool
 }
 
 type PostPageData struct {

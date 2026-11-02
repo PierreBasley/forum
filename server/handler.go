@@ -205,7 +205,7 @@ func RegisterHandler(db *sql.DB, m *session.Manager) http.HandlerFunc {
 
 			err = login.CreateAccount(db, username, email, password)
 			if err != nil {
-				renderError(w, 400, &ErrorDetails{Error: errors.New("Erreur création du compte"), AllowedMethods: nil})
+				renderError(w, 400, &ErrorDetails{Error: err, AllowedMethods: nil})
 				return
 			}
 
@@ -452,10 +452,18 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			return
 		}
 
-		_, ok, err := m.IsSessionActive(r, COOKIE_NAME)
+		userSession, ok, err := m.IsSessionActive(r, COOKIE_NAME)
 		if err != nil {
 			log.Println(err)
 			renderError(w, 500, nil)
+			return
+		}
+
+		onlyMine := r.URL.Query().Get("mine") == "1"
+		onlyLiked := r.URL.Query().Get("liked") == "1"
+
+		if (onlyMine || onlyLiked) && !ok {
+			renderError(w, http.StatusUnauthorized, &ErrorDetails{Error: errors.New("Vous devez être connecté pour utiliser ces filtres.")})
 			return
 		}
 
@@ -525,6 +533,25 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			conditions = append(conditions, `posts.title LIKE ? ESCAPE '\'`)
 
 			args = append(args, "%"+escapedSearch+"%")
+		}
+
+		if onlyMine {
+			conditions = append(conditions, "posts.user_id = ?")
+			args = append(args, userSession.UserID)
+		}
+
+		if onlyLiked {
+			conditions = append(conditions, `
+			EXISTS (
+				SELECT 1
+				FROM likes AS my_likes
+				WHERE my_likes.post_id = posts.id
+				AND my_likes.user_id = ?
+				AND my_likes.reaction = 'like'
+				)
+			`)
+
+			args = append(args, userSession.UserID)
 		}
 
 		whereClause := ""
@@ -621,6 +648,8 @@ func ReadPosts(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			Search:             search,
 			Stacks:             stacks,
 			SelectedCategories: selectedCategories,
+			OnlyMine:           onlyMine,
+			OnlyLiked:          onlyLiked,
 		}
 
 		t, err := parseTemplates(POSTS_PATH)
@@ -895,6 +924,7 @@ func Comment(db *sql.DB, m *session.Manager) http.HandlerFunc {
 				renderError(w, 500, nil)
 				return
 			}
+
 			userSession, validSession, err := m.RechercheSession(sessionCookie.Value)
 			if err != nil {
 				log.Println("Session invalide:", err)
@@ -965,10 +995,8 @@ func Comment(db *sql.DB, m *session.Manager) http.HandlerFunc {
 			}
 			rows.Close()
 			http.Redirect(w, r, "/posts/"+postID, http.StatusFound)
-		} else if r.Method == http.MethodPut {
-			// this is where we handle the comment modifying logic
 		} else {
-			renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"POST", "PUT"}})
+			renderError(w, 405, &ErrorDetails{Error: nil, AllowedMethods: []string{"POST"}})
 			return
 		}
 	}
