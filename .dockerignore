@@ -1,8 +1,7 @@
 .*ignore
-.env
+*.md
 .env.example
 .git
 Dockerfile
 compose.yaml
-*.md
 setup.sh
