@@ -44,9 +44,9 @@ RUN apk add gcc musl-dev; go mod tidy; CGO_ENABLED=1 go build -o forum .
 # Make the program files available for the app image directly so that it can
 # include those in a single layer (one COPY instruction)
 # This is run after the build so that changing the static files doesn't
-# necessarily mean we have to rebuild the executable though
-# the other way around (changing source without changing static files) will
-# invalidate those layers (not a big deal as it's very fast compared to build)
+# necessarily mean we have to rebuild the executable
+# though the other way around (changing source without changing static files)
+# will invalidate those layers; this is acceptable (very fast compared to build)
 RUN mkdir program-files
 ADD templates  ./program-files/templates
 ADD migrations ./program-files/migrations
